@@ -78,6 +78,23 @@ body {
   gap: 8px;
   font-weight: 600;
 }
+.loom-brand-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--text);
+  font: inherit;
+  font-weight: 600;
+  padding: 4px 8px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+.loom-brand-btn:hover {
+  background: var(--panel-2);
+  border-color: var(--line);
+}
 .loom-logo {
   color: var(--accent);
   font-size: 18px;
@@ -678,6 +695,155 @@ textarea.loom-input {
 .loom-modal-body .loom-iframe {
   height: 100%;
   min-height: 640px;
+}
+
+/* ---------- home / gallery ---------- */
+.loom-home {
+  flex: 1;
+  overflow-y: auto;
+  background:
+    radial-gradient(1200px 500px at 50% -10%, color-mix(in srgb, var(--accent) 10%, transparent), transparent),
+    var(--bg);
+}
+.loom-home-inner {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 56px 28px 64px;
+}
+.loom-home-head {
+  text-align: center;
+  margin-bottom: 40px;
+}
+.loom-home-logo {
+  font-size: 40px;
+  color: var(--accent);
+  line-height: 1;
+  margin-bottom: 14px;
+}
+.loom-home-head h1 {
+  margin: 0 0 10px;
+  font-size: 30px;
+  letter-spacing: -0.3px;
+}
+.loom-home-head p {
+  margin: 0 auto;
+  max-width: 560px;
+  color: var(--text-dim);
+  font-size: 14px;
+  line-height: 1.6;
+}
+.loom-home-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(248px, 1fr));
+  gap: 18px;
+}
+.loom-card {
+  position: relative;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  overflow: hidden;
+  cursor: pointer;
+  text-align: left;
+  padding: 0;
+  font: inherit;
+  color: var(--text);
+  transition: transform 0.12s, border-color 0.12s, box-shadow 0.12s;
+}
+.loom-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--accent);
+  box-shadow: var(--shadow);
+}
+.loom-card-preview {
+  height: 96px;
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--tint, var(--accent)) 22%, var(--panel)), var(--panel));
+  display: flex;
+  flex-wrap: wrap;
+  align-content: center;
+  gap: 7px;
+  padding: 16px;
+  border-bottom: 1px solid var(--line);
+}
+.loom-card-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--tint, var(--accent));
+  opacity: 0.85;
+}
+.loom-card-empty-dot {
+  font-size: 11px;
+  color: var(--text-faint);
+  font-style: italic;
+}
+.loom-card-body {
+  padding: 12px 14px 14px;
+}
+.loom-card-name {
+  font-size: 15px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.loom-card-meta {
+  display: flex;
+  gap: 6px;
+  font-size: 11.5px;
+  color: var(--text-faint);
+  margin-top: 5px;
+}
+.loom-card-active {
+  position: absolute;
+  top: 10px;
+  left: 12px;
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  background: var(--accent);
+  color: #fff;
+  padding: 2px 7px;
+  border-radius: 6px;
+}
+.loom-card-actions {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: flex;
+  gap: 2px;
+  z-index: 2;
+}
+.loom-card:hover .loom-card-actions .loom-icon-btn {
+  opacity: 1;
+}
+.loom-card-actions .loom-icon-btn {
+  background: color-mix(in srgb, var(--panel) 70%, transparent);
+  border-radius: 6px;
+}
+.loom-card-new {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 174px;
+  border: 1.5px dashed var(--line-2);
+  background: transparent;
+  color: var(--text-dim);
+}
+.loom-card-new:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.loom-card-plus {
+  font-size: 32px;
+  line-height: 1;
+}
+.loom-card-new-label {
+  font-size: 13px;
+  font-weight: 500;
 }
 
 /* ---------- project switcher ---------- */

@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { api, type Checkpoint, type Graph, type GraphNode, type Project, type SseEvent } from "./api";
 
 export type Theme = "dark" | "light";
+export type View = "home" | "canvas";
 
 const initialTheme: Theme =
   (typeof localStorage !== "undefined" &&
@@ -14,6 +15,7 @@ interface LoomState {
   selectedNodeId: string | null;
   fullscreenNodeId: string | null;
   theme: Theme;
+  view: View;
   // history / projects
   projects: Project[];
   checkpoints: Checkpoint[];
@@ -28,6 +30,7 @@ interface LoomState {
   selectNode: (id: string | null) => void;
   setFullscreen: (id: string | null) => void;
   toggleTheme: () => void;
+  setView: (v: View) => void;
   setHistoryOpen: (open: boolean) => void;
   refreshWorkspace: () => Promise<void>;
   beginDrag: (id: string) => void;
@@ -41,6 +44,7 @@ export const useStore = create<LoomState>((set, get) => ({
   selectedNodeId: null,
   fullscreenNodeId: null,
   theme: initialTheme,
+  view: "home",
   projects: [],
   checkpoints: [],
   headId: null,
@@ -50,7 +54,11 @@ export const useStore = create<LoomState>((set, get) => ({
 
   applyEvent: (e) => {
     if (e.type === "graph") {
-      set({ graph: e.graph });
+      // keep the active project's card count live without a refetch
+      const projects = get().projects.map((p) =>
+        p.active ? { ...p, node_count: e.graph.nodes.length } : p,
+      );
+      set({ graph: e.graph, projects });
     } else if (e.type === "node_moved") {
       const g = get().graph;
       if (!g || get().dragging.has(e.id)) return;
@@ -67,6 +75,7 @@ export const useStore = create<LoomState>((set, get) => ({
     }
   },
 
+  setView: (view) => set({ view }),
   setHistoryOpen: (historyOpen) => set({ historyOpen }),
   refreshWorkspace: async () => {
     try {

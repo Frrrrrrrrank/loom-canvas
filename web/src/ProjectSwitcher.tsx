@@ -24,12 +24,14 @@ export function ProjectSwitcher() {
     const name = window.prompt("New canvas name", "Untitled Research");
     if (name === null) return;
     await api.createProject(name || "Untitled Research");
+    useStore.getState().setView("canvas");
     setOpen(false);
     refresh();
   };
 
   const switchTo = async (id: string) => {
     await api.activateProject(id);
+    useStore.getState().setView("canvas");
     setOpen(false);
   };
 

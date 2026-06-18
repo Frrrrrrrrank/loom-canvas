@@ -3,6 +3,7 @@ import { ReactFlowProvider } from "@xyflow/react";
 import { api, subscribe } from "./api";
 import { Canvas } from "./Canvas";
 import { HistoryPanel } from "./HistoryPanel";
+import { Home } from "./Home";
 import { FullscreenModal, Inspector } from "./Inspector";
 import { ProjectSwitcher } from "./ProjectSwitcher";
 import { useStore } from "./store";
@@ -17,6 +18,8 @@ export default function App() {
   const refreshWorkspace = useStore((s) => s.refreshWorkspace);
   const setHistoryOpen = useStore((s) => s.setHistoryOpen);
   const dirty = useStore((s) => s.dirty);
+  const view = useStore((s) => s.view);
+  const setView = useStore((s) => s.setView);
 
   useEffect(() => {
     const unsub = subscribe(applyEvent, setConnected);
@@ -44,25 +47,39 @@ export default function App() {
     <div className="loom-app">
       <header className="loom-topbar">
         <div className="loom-brand">
-          <span className="loom-logo">◇</span>
-          <span className="loom-brand-name">Loom</span>
-          <span className="loom-brand-sep">/</span>
-          <ProjectSwitcher />
+          <button
+            className="loom-brand-btn"
+            onClick={() => setView("home")}
+            title="Home"
+          >
+            <span className="loom-logo">◇</span>
+            <span className="loom-brand-name">Loom</span>
+          </button>
+          {view === "canvas" && (
+            <>
+              <span className="loom-brand-sep">/</span>
+              <ProjectSwitcher />
+            </>
+          )}
         </div>
         <div className="loom-topbar-right">
-          <button className="loom-btn ghost" onClick={saveVersion} title="Save a version">
-            {dirty ? "● Save" : "Save"}
-          </button>
-          <button
-            className="loom-btn ghost"
-            onClick={() => setHistoryOpen(true)}
-            title="Version history"
-          >
-            ⟲ History
-          </button>
-          <button className="loom-btn" onClick={addNode}>
-            + Node
-          </button>
+          {view === "canvas" && (
+            <>
+              <button className="loom-btn ghost" onClick={saveVersion} title="Save a version">
+                {dirty ? "● Save" : "Save"}
+              </button>
+              <button
+                className="loom-btn ghost"
+                onClick={() => setHistoryOpen(true)}
+                title="Version history"
+              >
+                ⟲ History
+              </button>
+              <button className="loom-btn" onClick={addNode}>
+                + Node
+              </button>
+            </>
+          )}
           <button
             className="loom-btn ghost loom-theme-toggle"
             onClick={toggleTheme}
@@ -77,27 +94,31 @@ export default function App() {
         </div>
       </header>
 
-      <div className="loom-body">
-        <ReactFlowProvider>
-          <div className="loom-canvas-wrap">
-            <Canvas />
-            {(!graph || graph.nodes.length === 0) && (
-              <div className="loom-onboard">
-                <h2>Empty canvas</h2>
-                <p>
-                  Design it from Claude Code / Codex — try:
-                  <br />
-                  <code>"用 Loom 搭一个昂跑台湾市场进入研究的画布"</code>
-                </p>
-                <p className="loom-onboard-dim">
-                  Or click <b>+ Node</b> to add one manually. Both stay in sync.
-                </p>
-              </div>
-            )}
-          </div>
-        </ReactFlowProvider>
-        <Inspector />
-      </div>
+      {view === "home" ? (
+        <Home />
+      ) : (
+        <div className="loom-body">
+          <ReactFlowProvider>
+            <div className="loom-canvas-wrap">
+              <Canvas />
+              {(!graph || graph.nodes.length === 0) && (
+                <div className="loom-onboard">
+                  <h2>Empty canvas</h2>
+                  <p>
+                    Design it from Claude Code / Codex — try:
+                    <br />
+                    <code>"用 Loom 搭一个昂跑台湾市场进入研究的画布"</code>
+                  </p>
+                  <p className="loom-onboard-dim">
+                    Or click <b>+ Node</b> to add one manually. Both stay in sync.
+                  </p>
+                </div>
+              )}
+            </div>
+          </ReactFlowProvider>
+          <Inspector />
+        </div>
+      )}
       <FullscreenModal />
       <HistoryPanel />
     </div>
