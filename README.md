@@ -86,6 +86,10 @@ pnpm build     # rebuild web/dist (commit it so end users still need no Node)
 - **Rich nodes** — markdown / charts / tables / HTML slides / images, inline.
 - **并发试错 (抽卡)** — stack v1/v2/v3 result versions per node; pick the best.
 - **快速追溯** — every result carries its evidence chain with confidence scores.
+- **Multiple canvases** — each study (On Running today, Nike tomorrow) is its own
+  project with its own graph and history; switch from the top-left dropdown.
+- **Version history + branching** — save versions, roll back to any point, and
+  branch from an old version (Lovable-style). The ⟲ History panel shows the tree.
 
 ## Config (env vars)
 - `LOOM_HOST` / `LOOM_PORT` — server bind (default `127.0.0.1:8765`).

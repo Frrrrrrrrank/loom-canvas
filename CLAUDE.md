@@ -43,6 +43,12 @@ A `loom` skill is installed under `.claude/skills/loom/` — follow it. In short
 - **快速追溯**: attach `sources` (with confidence, and `type:"node"` to point back
   to upstream nodes) to every result.
 
+- **Projects & history**: each canvas is a project with its own version history.
+  Start a NEW study with `new_project(name)` (don't pile it onto an existing
+  canvas). `checkpoint("...")` at milestones (after design, after a run) so the
+  user can roll back; `list_history` / `restore_checkpoint` to roll back (editing
+  after a restore branches automatically).
+
 See `.claude/skills/loom/methodology.md` for consulting workflow templates and the
 analysis library.
 

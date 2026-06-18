@@ -2,7 +2,9 @@ import { useEffect } from "react";
 import { ReactFlowProvider } from "@xyflow/react";
 import { api, subscribe } from "./api";
 import { Canvas } from "./Canvas";
+import { HistoryPanel } from "./HistoryPanel";
 import { FullscreenModal, Inspector } from "./Inspector";
+import { ProjectSwitcher } from "./ProjectSwitcher";
 import { useStore } from "./store";
 
 export default function App() {
@@ -12,15 +14,25 @@ export default function App() {
   const setConnected = useStore((s) => s.setConnected);
   const theme = useStore((s) => s.theme);
   const toggleTheme = useStore((s) => s.toggleTheme);
+  const refreshWorkspace = useStore((s) => s.refreshWorkspace);
+  const setHistoryOpen = useStore((s) => s.setHistoryOpen);
+  const dirty = useStore((s) => s.dirty);
 
   useEffect(() => {
     const unsub = subscribe(applyEvent, setConnected);
+    refreshWorkspace();
     return unsub;
-  }, [applyEvent, setConnected]);
+  }, [applyEvent, setConnected, refreshWorkspace]);
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
   }, [theme]);
+
+  const saveVersion = async () => {
+    const msg = window.prompt("Save current canvas as version — label:", "manual save");
+    if (msg === null) return;
+    await api.createCheckpoint(msg || "manual save");
+  };
 
   const addNode = async () => {
     const id = `node_${Math.random().toString(36).slice(2, 7)}`;
@@ -35,9 +47,19 @@ export default function App() {
           <span className="loom-logo">◇</span>
           <span className="loom-brand-name">Loom</span>
           <span className="loom-brand-sep">/</span>
-          <span className="loom-graph-name">{graph?.name || "Research Canvas"}</span>
+          <ProjectSwitcher />
         </div>
         <div className="loom-topbar-right">
+          <button className="loom-btn ghost" onClick={saveVersion} title="Save a version">
+            {dirty ? "● Save" : "Save"}
+          </button>
+          <button
+            className="loom-btn ghost"
+            onClick={() => setHistoryOpen(true)}
+            title="Version history"
+          >
+            ⟲ History
+          </button>
           <button className="loom-btn" onClick={addNode}>
             + Node
           </button>
@@ -77,6 +99,7 @@ export default function App() {
         <Inspector />
       </div>
       <FullscreenModal />
+      <HistoryPanel />
     </div>
   );
 }

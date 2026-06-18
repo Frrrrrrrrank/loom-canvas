@@ -93,6 +93,20 @@ Every result should carry its evidence chain in `sources`:
   {"type":"node","ref":"social"}]`. Use `type:"node"` to point a synthesis back
 to the upstream research it drew from. This is what makes a conclusion auditable.
 
+## Projects & version history
+Each canvas is a **project** with its own history. Use these so the user's work
+is organized and recoverable:
+- **A new, unrelated study → `new_project(name)`** first (e.g. the user pivots from
+  On Running to a Nike analysis). Don't pile a second study onto an existing
+  canvas. `list_projects` / `switch_project` to navigate.
+- **`checkpoint(message)` at milestones** — after you finish the design
+  ("designed canvas") and after a run completes ("ran research v1"). This gives the
+  user restore points. Auto-checkpoints already protect destructive ops, but your
+  explicit, well-labeled checkpoints are what make the history readable.
+- **`list_history` / `restore_checkpoint(id)`** when the user wants to roll back.
+  Editing after a restore branches automatically — tell the user their other
+  versions stay intact.
+
 ## Style
 - Match the consulting register: storyline-led, MECE modules, insight > raw data.
 - Keep node instructions tight. Keep results skimmable on a card.

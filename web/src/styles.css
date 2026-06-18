@@ -680,6 +680,253 @@ textarea.loom-input {
   min-height: 640px;
 }
 
+/* ---------- project switcher ---------- */
+.loom-projsw {
+  position: relative;
+}
+.loom-projsw-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--text-dim);
+  font: inherit;
+  font-weight: 500;
+  padding: 4px 8px;
+  border-radius: 7px;
+  cursor: pointer;
+}
+.loom-projsw-btn:hover {
+  background: var(--panel-2);
+  border-color: var(--line);
+}
+.loom-projsw-caret {
+  font-size: 10px;
+  color: var(--text-faint);
+}
+.loom-projsw-menu {
+  position: absolute;
+  top: 38px;
+  left: 0;
+  width: 300px;
+  background: var(--panel);
+  border: 1px solid var(--line-2);
+  border-radius: 10px;
+  box-shadow: var(--shadow);
+  z-index: 20;
+  overflow: hidden;
+}
+.loom-projsw-head {
+  font-size: 10px;
+  letter-spacing: 0.6px;
+  color: var(--text-faint);
+  padding: 10px 12px 6px;
+}
+.loom-projsw-list {
+  max-height: 320px;
+  overflow-y: auto;
+}
+.loom-projsw-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  cursor: pointer;
+  font-size: 13px;
+}
+.loom-projsw-row:hover {
+  background: var(--panel-2);
+}
+.loom-projsw-row.active {
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+}
+.loom-projsw-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--line-2);
+  flex-shrink: 0;
+}
+.loom-projsw-row.active .loom-projsw-dot {
+  background: var(--accent);
+}
+.loom-projsw-name {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.loom-projsw-count {
+  font-size: 10px;
+  color: var(--text-faint);
+}
+.loom-icon-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-faint);
+  cursor: pointer;
+  font-size: 12px;
+  padding: 2px 4px;
+  border-radius: 4px;
+  opacity: 0;
+}
+.loom-projsw-row:hover .loom-icon-btn {
+  opacity: 1;
+}
+.loom-icon-btn:hover {
+  color: var(--text);
+  background: var(--line);
+}
+.loom-icon-btn.danger:hover {
+  color: var(--red);
+}
+.loom-projsw-empty {
+  padding: 10px 12px;
+  color: var(--text-faint);
+  font-size: 12px;
+}
+.loom-projsw-new {
+  width: 100%;
+  text-align: left;
+  padding: 10px 12px;
+  background: transparent;
+  border: none;
+  border-top: 1px solid var(--line);
+  color: var(--accent);
+  cursor: pointer;
+  font: inherit;
+  font-size: 13px;
+}
+.loom-projsw-new:hover {
+  background: var(--panel-2);
+}
+
+/* ---------- history panel ---------- */
+.loom-history {
+  width: min(560px, 94vw);
+  height: min(760px, 88vh);
+  background: var(--bg-2);
+  border: 1px solid var(--line-2);
+  border-radius: 14px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: var(--shadow);
+}
+.loom-history-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 20px;
+}
+.loom-history-dirty {
+  background: color-mix(in srgb, var(--amber) 14%, transparent);
+  border: 1px solid color-mix(in srgb, var(--amber) 40%, transparent);
+  color: var(--amber);
+  font-size: 12px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  margin-bottom: 14px;
+}
+.loom-timeline {
+  position: relative;
+}
+.loom-cp {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 4px 0;
+}
+.loom-cp-rail {
+  position: relative;
+  width: 14px;
+  align-self: stretch;
+  display: flex;
+  justify-content: center;
+}
+.loom-cp-rail::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: var(--line);
+}
+.loom-cp:first-child .loom-cp-rail::before {
+  top: 10px;
+}
+.loom-cp:last-child .loom-cp-rail::before {
+  bottom: calc(100% - 10px);
+}
+.loom-cp-dot {
+  position: relative;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--line-2);
+  border: 2px solid var(--bg-2);
+  margin-top: 4px;
+  z-index: 1;
+}
+.loom-cp-dot.branch {
+  background: var(--amber);
+}
+.loom-cp.head .loom-cp-dot {
+  background: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 25%, transparent);
+}
+.loom-cp-body {
+  flex: 1;
+  padding: 2px 0 12px;
+  min-width: 0;
+}
+.loom-cp-line1 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.loom-cp-msg {
+  font-size: 13px;
+  font-weight: 500;
+}
+.loom-cp-badge {
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  padding: 1px 6px;
+  border-radius: 5px;
+  background: var(--panel-2);
+  color: var(--text-dim);
+}
+.loom-cp-badge.head {
+  background: var(--accent);
+  color: #fff;
+}
+.loom-cp-badge.auto {
+  color: var(--text-faint);
+}
+.loom-cp-badge.branch {
+  color: var(--amber);
+  background: color-mix(in srgb, var(--amber) 16%, transparent);
+}
+.loom-cp-line2 {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 11px;
+  color: var(--text-faint);
+  margin-top: 3px;
+}
+.loom-cp-id {
+  font-family: "SFMono-Regular", Consolas, monospace;
+}
+.loom-history-hint {
+  font-size: 11.5px;
+  color: var(--text-faint);
+  margin-top: 16px;
+  line-height: 1.5;
+}
+
 /* ---------- react flow theme tweaks ---------- */
 .react-flow__controls button {
   background: var(--panel) !important;

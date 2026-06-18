@@ -141,3 +141,31 @@ class Graph(BaseModel):
             if i not in order:
                 order.append(i)
         return order
+
+
+class Checkpoint(BaseModel):
+    """One saved version in a project's history tree.
+
+    parent_id links checkpoints into a tree, so restoring an old checkpoint and
+    editing creates a branch (Lovable-style), not a destructive overwrite."""
+
+    id: str
+    parent_id: Optional[str] = None
+    message: str = "snapshot"
+    created_at: float = Field(default_factory=_now)
+    node_count: int = 0
+    edge_count: int = 0
+    auto: bool = Field(default=False, description="created automatically (e.g. before a destructive op)")
+
+
+class ProjectMeta(BaseModel):
+    """A project = one named canvas with its own working graph + history tree."""
+
+    id: str
+    name: str = "Untitled Research"
+    created_at: float = Field(default_factory=_now)
+    updated_at: float = Field(default_factory=_now)
+    head_id: Optional[str] = Field(
+        default=None, description="checkpoint the current working graph descends from"
+    )
+    checkpoints: list[Checkpoint] = Field(default_factory=list)

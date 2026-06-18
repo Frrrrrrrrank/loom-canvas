@@ -261,6 +261,55 @@ def set_node_result(
     return _after(_call("POST", f"/api/nodes/{node_id}/result", json=body))
 
 
+# ============== projects (history of canvases) ==============
+@mcp.tool()
+def list_projects() -> Any:
+    """List all canvases/projects in the workspace (id, name, node_count, active).
+    Each project is an independent canvas with its own graph and version history."""
+    return _call("GET", "/api/projects")
+
+
+@mcp.tool()
+def new_project(name: str) -> dict[str, Any]:
+    """Create a NEW empty canvas/project and switch to it. Use this when the user
+    starts a different study (e.g. a Nike analysis vs an existing On Running one)
+    so each gets its own canvas and history. Returns the new project, then design
+    it as usual with add_node/connect."""
+    return _call("POST", "/api/projects", json={"name": name})
+
+
+@mcp.tool()
+def switch_project(project_id: str) -> dict[str, Any]:
+    """Switch the active canvas to an existing project by id (from list_projects)."""
+    return _call("POST", f"/api/projects/{project_id}/activate")
+
+
+# ============== checkpoints (version history / rollback) ==============
+@mcp.tool()
+def checkpoint(message: str) -> dict[str, Any]:
+    """Save the current canvas as a named version in this project's history.
+
+    Call this at meaningful milestones so the user can roll back later — e.g.
+    after finishing the design ("designed canvas"), and after a run ("ran research,
+    v1"). Editing after restoring an old checkpoint creates a branch."""
+    return _call("POST", "/api/checkpoints", json={"message": message})
+
+
+@mcp.tool()
+def list_history() -> Any:
+    """List this project's saved versions (checkpoints) as a tree with head + parent
+    links, plus whether there are unsaved changes."""
+    return _call("GET", "/api/checkpoints")
+
+
+@mcp.tool()
+def restore_checkpoint(checkpoint_id: str) -> dict[str, Any]:
+    """Roll the canvas back to a saved version (from list_history). Non-destructive:
+    current unsaved work is auto-saved first, and editing after a restore branches
+    from that point. The canvas updates live."""
+    return _after(_call("POST", f"/api/checkpoints/{checkpoint_id}/restore"))
+
+
 def main() -> None:
     mcp.run()
 

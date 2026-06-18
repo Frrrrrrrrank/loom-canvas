@@ -26,12 +26,11 @@ from .state import Store
 
 # ---------------- paths ----------------
 DATA_DIR = Path(os.environ.get("LOOM_DATA_DIR", Path.home() / ".loom"))
-GRAPH_PATH = DATA_DIR / "graph.json"
 ARTIFACT_DIR = DATA_DIR / "artifacts"
 ARTIFACT_DIR.mkdir(parents=True, exist_ok=True)
 WEB_DIST = Path(__file__).resolve().parent.parent.parent / "web" / "dist"
 
-store = Store(GRAPH_PATH)
+store = Store(DATA_DIR)
 
 app = FastAPI(title="Loom", version="0.1.0")
 app.add_middleware(
@@ -92,6 +91,14 @@ class StatusBody(BaseModel):
 
 class SelectBody(BaseModel):
     version: str
+
+
+class ProjectBody(BaseModel):
+    name: str = ""
+
+
+class CheckpointBody(BaseModel):
+    message: str = ""
 
 
 # ================= API: reads =================
@@ -175,6 +182,61 @@ def get_run_plan() -> dict[str, Any]:
             "not one at a time. Levels themselves run in sequence."
         ),
     }
+
+
+# ================= API: projects (history of canvases) =================
+@app.get("/api/projects")
+def list_projects() -> list[dict[str, Any]]:
+    return store.list_projects()
+
+
+@app.post("/api/projects")
+def create_project(body: ProjectBody) -> dict[str, Any]:
+    return store.create_project(body.name)
+
+
+@app.post("/api/projects/{pid}/activate")
+def activate_project(pid: str) -> dict[str, Any]:
+    try:
+        return store.switch_project(pid)
+    except KeyError:
+        raise HTTPException(404, f"project '{pid}' not found")
+
+
+@app.patch("/api/projects/{pid}")
+def rename_project(pid: str, body: ProjectBody) -> dict[str, Any]:
+    try:
+        return store.rename_project(pid, body.name)
+    except KeyError:
+        raise HTTPException(404, f"project '{pid}' not found")
+
+
+@app.delete("/api/projects/{pid}")
+def delete_project(pid: str) -> dict[str, str]:
+    try:
+        store.delete_project(pid)
+    except KeyError:
+        raise HTTPException(404, f"project '{pid}' not found")
+    return {"status": "ok"}
+
+
+# ================= API: checkpoints (version history) =================
+@app.get("/api/checkpoints")
+def list_checkpoints() -> dict[str, Any]:
+    return store.list_history()
+
+
+@app.post("/api/checkpoints")
+def create_checkpoint(body: CheckpointBody) -> dict[str, Any]:
+    return store.checkpoint(body.message)
+
+
+@app.post("/api/checkpoints/{cid}/restore")
+def restore_checkpoint(cid: str) -> dict[str, Any]:
+    try:
+        return store.restore_checkpoint(cid)
+    except KeyError:
+        raise HTTPException(404, f"checkpoint '{cid}' not found")
 
 
 # ================= API: graph mutations =================

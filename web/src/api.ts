@@ -72,8 +72,64 @@ async function j<T>(r: Response): Promise<T> {
   return r.json() as Promise<T>;
 }
 
+export interface Project {
+  id: string;
+  name: string;
+  created_at: number;
+  updated_at: number;
+  node_count: number;
+  checkpoints: number;
+  active: boolean;
+}
+
+export interface Checkpoint {
+  id: string;
+  parent_id: string | null;
+  message: string;
+  created_at: number;
+  node_count: number;
+  edge_count: number;
+  auto: boolean;
+}
+
+export interface History {
+  head_id: string | null;
+  dirty: boolean;
+  checkpoints: Checkpoint[];
+}
+
 export const api = {
   getGraph: () => fetch("/api/graph").then((r) => j<Graph>(r)),
+
+  // ---- projects (history of canvases) ----
+  listProjects: () => fetch("/api/projects").then((r) => j<Project[]>(r)),
+  createProject: (name: string) =>
+    fetch("/api/projects", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ name }),
+    }).then((r) => j<{ id: string; name: string }>(r)),
+  activateProject: (id: string) =>
+    fetch(`/api/projects/${encodeURIComponent(id)}/activate`, { method: "POST" }),
+  renameProject: (id: string, name: string) =>
+    fetch(`/api/projects/${encodeURIComponent(id)}`, {
+      method: "PATCH",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ name }),
+    }),
+  deleteProject: (id: string) =>
+    fetch(`/api/projects/${encodeURIComponent(id)}`, { method: "DELETE" }),
+
+  // ---- checkpoints (version history) ----
+  getHistory: () => fetch("/api/checkpoints").then((r) => j<History>(r)),
+  createCheckpoint: (message: string) =>
+    fetch("/api/checkpoints", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ message }),
+    }),
+  restoreCheckpoint: (id: string) =>
+    fetch(`/api/checkpoints/${encodeURIComponent(id)}/restore`, { method: "POST" }),
 
   addNode: (body: Partial<GraphNode> & { id: string }) =>
     fetch("/api/nodes", {
@@ -132,7 +188,8 @@ export const api = {
 
 export type SseEvent =
   | { type: "graph"; graph: Graph }
-  | { type: "node_moved"; id: string; position: { x: number; y: number } };
+  | { type: "node_moved"; id: string; position: { x: number; y: number } }
+  | { type: "workspace" };
 
 export function subscribe(
   onEvent: (e: SseEvent) => void,

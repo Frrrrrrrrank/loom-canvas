@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import type { Graph, GraphNode, SseEvent } from "./api";
+import { api, type Checkpoint, type Graph, type GraphNode, type Project, type SseEvent } from "./api";
 
 export type Theme = "dark" | "light";
 
@@ -14,6 +14,12 @@ interface LoomState {
   selectedNodeId: string | null;
   fullscreenNodeId: string | null;
   theme: Theme;
+  // history / projects
+  projects: Project[];
+  checkpoints: Checkpoint[];
+  headId: string | null;
+  dirty: boolean;
+  historyOpen: boolean;
   // nodes the user is mid-drag on; we ignore server position echoes for these
   dragging: Set<string>;
 
@@ -22,6 +28,8 @@ interface LoomState {
   selectNode: (id: string | null) => void;
   setFullscreen: (id: string | null) => void;
   toggleTheme: () => void;
+  setHistoryOpen: (open: boolean) => void;
+  refreshWorkspace: () => Promise<void>;
   beginDrag: (id: string) => void;
   endDrag: (id: string) => void;
   nodeById: (id: string) => GraphNode | undefined;
@@ -33,6 +41,11 @@ export const useStore = create<LoomState>((set, get) => ({
   selectedNodeId: null,
   fullscreenNodeId: null,
   theme: initialTheme,
+  projects: [],
+  checkpoints: [],
+  headId: null,
+  dirty: false,
+  historyOpen: false,
   dragging: new Set(),
 
   applyEvent: (e) => {
@@ -49,6 +62,26 @@ export const useStore = create<LoomState>((set, get) => ({
           ),
         },
       });
+    } else if (e.type === "workspace") {
+      void get().refreshWorkspace();
+    }
+  },
+
+  setHistoryOpen: (historyOpen) => set({ historyOpen }),
+  refreshWorkspace: async () => {
+    try {
+      const [projects, history] = await Promise.all([
+        api.listProjects(),
+        api.getHistory(),
+      ]);
+      set({
+        projects,
+        checkpoints: history.checkpoints,
+        headId: history.head_id,
+        dirty: history.dirty,
+      });
+    } catch {
+      /* server not up yet */
     }
   },
 
