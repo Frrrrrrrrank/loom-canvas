@@ -44,7 +44,9 @@ export const useStore = create<LoomState>((set, get) => ({
   selectedNodeId: null,
   fullscreenNodeId: null,
   theme: initialTheme,
-  view: "home",
+  // land on the active canvas (so you see what CC is building); the home gallery
+  // is one click away via the Loom wordmark.
+  view: "canvas",
   projects: [],
   checkpoints: [],
   headId: null,

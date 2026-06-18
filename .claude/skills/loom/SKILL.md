@@ -18,6 +18,14 @@ writing each result back so it appears on the canvas.
   returns `"cannot reach Loom canvas server"`, tell the user to start it
   (`python server/run.py` in the loom folder) and open the URL.
 - Always call `get_graph` first to see what already exists. Don't clobber.
+- **One active canvas.** All your tools operate on whichever project is currently
+  active on the server. The user can switch or create canvases in the browser at
+  any time — so **call `get_graph` at the start of every design/run turn** to
+  confirm which canvas you're on before editing. The `name` it returns is the
+  active canvas. If the user says "in this new canvas, add …", they have already
+  switched the active canvas in the UI — just `get_graph` then edit; your changes
+  land on the canvas they're looking at. Use `new_project` only when YOU are
+  starting a new study, not when the user already created the canvas themselves.
 
 ## Phase 1 — Design from a brief
 Given a project brief (e.g. "On Running 台湾市场进入策略"), build a graph that
