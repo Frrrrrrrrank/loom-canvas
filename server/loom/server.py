@@ -145,12 +145,35 @@ def get_run_plan() -> dict[str, Any]:
                 "status": node.status,
             }
         )
+
+    # Parallel layering: a node's level = 1 + max(level of its upstream); nodes
+    # with no upstream are level 0. Every executable node in the same level has
+    # no dependency on the others, so they CAN and SHOULD be run concurrently
+    # (Claude Code fans them out to parallel subagents).
+    exec_ids = {s["id"] for s in steps}
+    level: dict[str, int] = {}
+    for nid in order:
+        ups = g.upstream(nid)
+        level[nid] = 0 if not ups else 1 + max((level.get(u, 0) for u in ups), default=0)
+    levels: list[list[str]] = []
+    max_level = max(level.values(), default=0)
+    for lv in range(max_level + 1):
+        layer = [nid for nid in order if level.get(nid) == lv and nid in exec_ids]
+        if layer:
+            levels.append(layer)
+
     return {
         "name": g.name,
         "description": g.description,
         "entry_point": g.entry_point,
         "order": order,
         "steps": steps,
+        "levels": levels,
+        "parallel_hint": (
+            "Each inner list in 'levels' is a set of nodes with no dependency on "
+            "each other — run them concurrently (one parallel subagent per node), "
+            "not one at a time. Levels themselves run in sequence."
+        ),
     }
 
 

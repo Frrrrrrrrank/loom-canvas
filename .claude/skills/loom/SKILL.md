@@ -46,16 +46,30 @@ re-`get_graph` to resync before large edits.
 
 ## Phase 2 — Run the canvas
 When the user says "运行 / run / 执行画布":
-1. `get_run_plan` → topologically-ordered steps with each node's instruction,
-   tools, and which upstream results are ready.
-2. For each step in order:
-   - `set_node_status(id, "running")` so the canvas shows it live.
-   - Actually do the work **as that node** — adopt its instruction as your brief,
-     use your real tools (web search, file reading, analysis). Pull upstream
-     context with `get_node(upstream_id)`.
-   - `set_node_result(...)` with the right `content_type` (see below). Attach
-     `sources` for 追溯 and `artifacts` for produced files.
-3. Respect edges: a node runs only after its upstream nodes have a result.
+1. `get_run_plan` → it returns `steps` (each node's instruction, tools, ready
+   upstream results) **and `levels`** — a list of node-id groups where every node
+   in a group has no dependency on the others.
+2. **Run level by level. Within a level, run the nodes IN PARALLEL — do not do
+   them one at a time.** Concretely, for each level:
+   - First `set_node_status(id, "running")` for every node in the level so they
+     all light up on the canvas at once.
+   - Then launch **one subagent per node in the SAME message** (Task/Agent tool,
+     multiple tool calls in one turn → they run concurrently). Each subagent:
+     does the node's work *as that node* (its instruction = its brief, using real
+     tools — web search, file reading, analysis; pull upstream context via
+     `get_node`), then calls `set_node_result(...)` for **its own node** with the
+     right `content_type`, plus `sources` (追溯) and `artifacts`.
+   - Move to the next level only after the current level's nodes have results.
+
+   Why: a single agent executes tool calls serially, so without subagents five
+   independent research nodes would run one-by-one. Fanning them out to parallel
+   subagents is what makes them actually run at the same time. The server is
+   concurrency-safe, so parallel `set_node_result` writes are fine.
+
+   (For a tiny graph or a single-node level, just do the work inline — no subagent
+   overhead needed.)
+3. Respect edges: a node runs only after its upstream nodes have a result. The
+   `levels` ordering already encodes this.
 
 ### content_type — pick the right renderer
 - `markdown` — narrative findings, bullet insights (default).

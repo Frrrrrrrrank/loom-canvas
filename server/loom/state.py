@@ -8,7 +8,9 @@ to every connected SSE subscriber so the canvas re-renders in real time.
 from __future__ import annotations
 
 import asyncio
+import functools
 import json
+import threading
 import time
 from pathlib import Path
 from typing import Any, Optional
@@ -22,6 +24,21 @@ from .models import (
     ResultVersion,
     Source,
 )
+
+
+def _synchronized(method):
+    """Serialize a Store method under self._lock.
+
+    Endpoints run in FastAPI's threadpool, so parallel subagents can hit the
+    store concurrently. This makes each read-modify-write-emit atomic, so the
+    in-memory graph and the JSON file never tear under concurrent writes."""
+
+    @functools.wraps(method)
+    def wrapper(self, *args, **kwargs):
+        with self._lock:
+            return method(self, *args, **kwargs)
+
+    return wrapper
 
 
 class Broadcaster:
@@ -52,6 +69,7 @@ class Store:
         self.path = path
         self.path.parent.mkdir(parents=True, exist_ok=True)
         self.bus = Broadcaster()
+        self._lock = threading.RLock()
         self.graph: Graph = self._load()
 
     # ---------------- persistence ----------------
@@ -74,15 +92,18 @@ class Store:
         self.bus.publish({"type": kind, "graph": self.graph.model_dump()})
 
     # ---------------- reads ----------------
+    @_synchronized
     def snapshot(self) -> dict[str, Any]:
         return self.graph.model_dump()
 
     # ---------------- graph-level ----------------
+    @_synchronized
     def replace_graph(self, data: dict[str, Any]) -> Graph:
         self.graph = Graph.model_validate(data)
         self._emit()
         return self.graph
 
+    @_synchronized
     def set_meta(self, name: Optional[str], description: Optional[str]) -> Graph:
         if name is not None:
             self.graph.name = name
@@ -91,12 +112,14 @@ class Store:
         self._emit()
         return self.graph
 
+    @_synchronized
     def clear(self) -> Graph:
         self.graph = Graph()
         self._emit()
         return self.graph
 
     # ---------------- nodes ----------------
+    @_synchronized
     def add_node(self, node: Node) -> Node:
         if self.graph.node(node.id):
             raise ValueError(f"node '{node.id}' already exists")
@@ -109,6 +132,7 @@ class Store:
         self._emit()
         return node
 
+    @_synchronized
     def update_node(self, node_id: str, changes: dict[str, Any]) -> Node:
         node = self.graph.node(node_id)
         if not node:
@@ -127,6 +151,7 @@ class Store:
         self._emit()
         return node
 
+    @_synchronized
     def move_node(self, node_id: str, x: float, y: float) -> Node:
         node = self.graph.node(node_id)
         if not node:
@@ -139,6 +164,7 @@ class Store:
         )
         return node
 
+    @_synchronized
     def remove_node(self, node_id: str) -> None:
         if not self.graph.node(node_id):
             raise KeyError(node_id)
@@ -152,6 +178,7 @@ class Store:
             )
         self._emit()
 
+    @_synchronized
     def set_entry_point(self, node_id: str) -> Graph:
         if not self.graph.node(node_id):
             raise KeyError(node_id)
@@ -160,6 +187,7 @@ class Store:
         return self.graph
 
     # ---------------- edges ----------------
+    @_synchronized
     def add_edge(
         self,
         source: str,
@@ -179,6 +207,7 @@ class Store:
         self._emit()
         return edge
 
+    @_synchronized
     def remove_edge(self, source: str, target: str) -> None:
         edge_id = f"{source}->{target}"
         before = len(self.graph.edges)
@@ -188,6 +217,7 @@ class Store:
         self._emit()
 
     # ---------------- results / versions ----------------
+    @_synchronized
     def set_node_result(
         self,
         node_id: str,
@@ -224,6 +254,7 @@ class Store:
         self._emit()
         return node
 
+    @_synchronized
     def select_version(self, node_id: str, version: str) -> Node:
         node = self.graph.node(node_id)
         if not node:
@@ -237,6 +268,7 @@ class Store:
         self._emit()
         return node
 
+    @_synchronized
     def set_status(self, node_id: str, status: str) -> Node:
         node = self.graph.node(node_id)
         if not node:

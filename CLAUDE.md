@@ -30,9 +30,14 @@ A `loom` skill is installed under `.claude/skills/loom/` — follow it. In short
 - **Design**: call `get_graph`, then build the canvas with `add_node` / `connect`
   (input brief → orchestrator/storyline → research nodes → analysis → output deck).
   The canvas updates live in the browser.
-- **Run**: call `get_run_plan`, then execute each node *as that node* (using your
-  real tools), writing results back with `set_node_result`. Pick `content_type`
-  per node: `markdown` / `chart` / `table` / `slides` (HTML) / `image`.
+- **Run**: call `get_run_plan` — it returns `levels`, groups of nodes with no
+  dependency on each other. Run level by level, but **within a level run the nodes
+  in parallel by launching one subagent per node in a single message** (a single
+  agent runs tools serially, so parallel subagents are what make independent
+  research nodes run at the same time). Each subagent works *as its node* (real
+  tools), then writes back with `set_node_result`, picking `content_type`
+  (`markdown` / `chart` / `table` / `slides` / `image`). The server is
+  concurrency-safe.
 - **并发试错 (抽卡)**: stack `version="v1"`, `"v2"`, ... on one node so the user can
   compare and pick.
 - **快速追溯**: attach `sources` (with confidence, and `type:"node"` to point back
