@@ -1,0 +1,24 @@
+# python
+server/.venv/
+__pycache__/
+*.pyc
+
+# node (web/dist IS committed so end users need no Node toolchain)
+web/node_modules/
+
+# generated, machine-specific (created by setup.py)
+.mcp.json
+.claude/launch.json
+
+# loom runtime data
+.loom/
+.loomdata/
+.loomtest/
+
+# os
+.DS_Store
+Thumbs.db
+
+# ts build cache
+web/tsconfig.tsbuildinfo
+*.tsbuildinfo
