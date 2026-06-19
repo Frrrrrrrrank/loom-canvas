@@ -93,7 +93,35 @@ pnpm build     # rebuild web/dist (commit it so end users still need no Node)
   point, and branch from an old version (Lovable-style). The ⟲ History panel
   shows the tree. Env: `LOOM_AUTOSAVE_IDLE` (seconds, 0 disables), `LOOM_AUTOSAVE_MAX`.
 
+## Hand it to someone (give their Claude Code / Codex a prompt)
+
+Prereqs on their machine: **git**, **Python ≥ 3.10**, and **Claude Code or Codex**.
+No Node, no API keys.
+
+**Step 1 — terminal, run once:**
+```bash
+git clone https://github.com/Frrrrrrrrank/loom-canvas.git
+cd loom-canvas
+```
+Then start `claude` (or `codex`) **inside the `loom-canvas` folder** and paste:
+
+**Step 2 — setup prompt:**
+> 帮我把当前目录(loom-canvas)的 Loom 工具装好并跑起来:
+> (1) 运行 `python setup.py`(需 Python ≥3.10;若 `python` 不是 3.10+ 用 `python3`。它会建 venv、装依赖、生成 .mcp.json,前端已预编译不需要 Node)。
+> (2) 用 `server/.venv` 里的 Python 在**后台**启动 `server/run.py` 并保持运行(Windows: `server\.venv\Scripts\python.exe`;mac/Linux: `server/.venv/bin/python`),然后 curl `http://127.0.0.1:8765/health` 确认 ok,让我在浏览器打开它。
+> (3) 读一下 `README.md` 和 `CLAUDE.md`,了解你怎么用 loom 工具。
+> (4) setup 生成了 .mcp.json。告诉我:**退出后在 `loom-canvas` 目录里重新运行 claude 并 approve 'loom' server** 就能连上 loom 工具(用 Codex 的话,把 setup 打印的 `[mcp_servers.loom]` 块加到 `~/.codex/config.toml` 再重启)。
+
+**Step 3 — restart** the CLI inside `loom-canvas` (so the `loom` tools connect), approve `loom`.
+
+**Step 4 — use prompt:**
+> 用 Loom 搭一个「<研究主题,例如:某品牌 XX 市场进入策略>」的研究画布并真的跑一遍:真实联网搜索填每个节点,同层无依赖的研究节点用并行子代理同时跑,storyline 出 2-3 个版本让我抽卡,结论都带来源。边做边让我在 `http://127.0.0.1:8765` 看。如果 loom 工具报连不上服务器,就在后台把 `server/run.py` 重新起一下。
+
+(Lazier variant: open the CLI in an *empty* folder and have step 2's prompt also
+`git clone` the repo first — but then the restart in step 3 must `cd loom-canvas`.)
+
 ## Config (env vars)
 - `LOOM_HOST` / `LOOM_PORT` — server bind (default `127.0.0.1:8765`).
-- `LOOM_DATA_DIR` — where `graph.json` + `artifacts/` live (default `~/.loom`).
+- `LOOM_DATA_DIR` — where projects + `artifacts/` live (default `~/.loom`).
 - `LOOM_SERVER_URL` — used by the MCP bridge to reach the server.
+- `LOOM_AUTOSAVE_IDLE` / `LOOM_AUTOSAVE_MAX` — idle-autosave seconds / version cap.
