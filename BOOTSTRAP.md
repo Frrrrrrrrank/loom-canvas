@@ -1,61 +1,56 @@
 # BOOTSTRAP.md — read this and set up Loom from scratch
 
 You are an AI agent (Claude Code / Codex) setting up **Loom** for a non-technical
-user on a machine that may have **no Python, no git, no Node**. Do every step
-yourself — the user will not run any commands. There are **no API keys**; all
-reasoning stays with you. Loom is a local research-canvas: you design a multi-agent
-research workflow on a visual canvas and execute it, streaming results to the canvas.
+user. The machine may have nothing installed (no git, no Python, no Node). Do every
+step yourself — the user won't run commands. There are **no API keys**; all reasoning
+stays with you. Loom is a local research-canvas: you design a multi-agent research
+workflow on a visual canvas and execute it, streaming results to the canvas.
 
-Work through the steps in order. If a step needs the user's permission (installing
-software, a password/UAC prompt), pause and tell them in one sentence what to click.
+Work through the steps in order. If a step needs the user's permission (a software
+install that prompts for a password / UAC), pause and tell them in one sentence what
+to click.
 
 ---
 
-## 0. You should have the repo files
-The user (or you) downloaded and extracted the project zip. `cd` into the repo
-folder — it contains `setup.py`, `server/`, `web/`, this file. If you don't have it
-yet, download and extract it (no git needed):
-- URL: `https://github.com/Frrrrrrrrank/loom-canvas/archive/refs/heads/main.zip`
-- Extract with `tar -xf` (built into Windows 10+/macOS/Linux) or PowerShell
-  `Expand-Archive`. The folder is `loom-canvas-main`; `cd` into it.
+## 1. Install what's missing — git and Python ≥ 3.10
+Just install anything that's missing, the normal way for this OS:
+- **git**: `winget install -e --id Git.Git` (Windows) · `brew install git` (macOS) ·
+  `sudo apt install -y git` (Linux). (macOS may offer the Xcode Command Line Tools — fine.)
+- **Python ≥ 3.10**: check `python3 --version` / `python --version` first. If missing or
+  older, install it: `winget install -e --id Python.Python.3.12` (Windows) ·
+  `brew install python@3.12` (macOS) · `sudo apt install -y python3 python3-venv` (Linux).
+  No-admin alternative: install `uv` (`curl -LsSf https://astral.sh/uv/install.sh | sh`
+  on macOS/Linux, `irm https://astral.sh/uv/install.ps1 | iex` in PowerShell on Windows),
+  then `uv python install 3.12`, and use `uv run --python 3.12 python` wherever a Python
+  is needed below.
 
-## 1. Ensure a Python ≥ 3.10  (PY)
-Check `python3 --version`, then `python --version`. If either is ≥ 3.10, use it as
-**PY** and skip to step 2.
+Node is **not** needed — the web UI ships prebuilt.
 
-Otherwise install one **without admin rights** using `uv`:
-- macOS / Linux: `curl -LsSf https://astral.sh/uv/install.sh | sh`
-- Windows (PowerShell): `powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"`
+## 2. Get the code
+```
+git clone https://github.com/Frrrrrrrrank/loom-canvas.git
+cd loom-canvas
+```
+(Only if git truly can't be installed: download
+`https://github.com/Frrrrrrrrank/loom-canvas/archive/refs/heads/main.zip`, extract, and
+`cd loom-canvas-main`.)
 
-`uv` installs into the user's home and prints its path (e.g. `~/.local/bin/uv` or
-`%USERPROFILE%\.local\bin\uv.exe`). If `uv` isn't on PATH yet, call it by full path.
-Then download a Python and set PY:
-- `uv python install 3.12`
-- **PY** = `uv run --python 3.12 python`
-
-Fallback if `uv` fails: install Python 3.12 via `winget install -e --id Python.Python.3.12`
-(Windows) / `brew install python@3.12` (macOS) / `sudo apt install -y python3 python3-venv`
-(Linux). These may prompt for confirmation or a password — ask the user.
-
-## 2. Set up the project
-Run (from the repo folder):  `PY setup.py`
-(e.g. `python3 setup.py`, or `uv run --python 3.12 python setup.py`).
+## 3. Set up
+Run `python setup.py` (or `python3 setup.py`, or `uv run --python 3.12 python setup.py`).
 It creates `server/.venv`, installs the small dependency set, and writes `.mcp.json`.
-The web UI ships **prebuilt** in `web/dist`, so **Node is NOT needed**.
 
-## 3. Start the canvas server (background — keep it running)
+## 4. Start the canvas server (background — keep it running)
 The venv's Python is `server/.venv/Scripts/python.exe` (Windows) or
 `server/.venv/bin/python` (macOS/Linux). Start the server in the **background** and
 leave it running for the whole session:
   `<venv-python> server/run.py`
-Verify it's up: `curl http://127.0.0.1:8765/health` → `{"status":"ok",...}`.
-Tell the user to open **http://127.0.0.1:8765** in their browser (they'll see an
-empty canvas / home).
+Verify: `curl http://127.0.0.1:8765/health` → `{"status":"ok",...}`.
+Tell the user to open **http://127.0.0.1:8765** in their browser.
 
-## 4. Drive Loom over HTTP — no restart, no MCP needed
+## 5. Drive Loom over HTTP — no restart needed
 Loom also exposes a `loom` MCP server, but MCP tools only connect after the CLI is
 restarted. To give the user a **zero-restart first run**, drive the canvas with plain
-HTTP calls to the server. These endpoints mirror the MCP tools 1:1.
+HTTP calls — these endpoints mirror the MCP tools 1:1.
 
 Base URL = `http://127.0.0.1:8765`. Send JSON bodies (curl:
 `-H "content-type: application/json" -d '{...}'`; PowerShell:
@@ -99,7 +94,7 @@ alternative storylines the user can compare and pick on the canvas.
 
 Templates and the analysis library live in `.claude/skills/loom/methodology.md` — read it.
 
-## 5. Later sessions (optional, smoother)
+## 6. Later sessions (optional, smoother)
 Next time the user starts their CLI **inside this folder**, the `loom` MCP tools
 auto-connect (Claude Code), or for Codex they add the `[mcp_servers.loom]` block that
 `setup.py` printed to `~/.codex/config.toml`. Then you can use the `loom` tools

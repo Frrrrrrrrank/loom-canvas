@@ -96,21 +96,21 @@ pnpm build     # rebuild web/dist (commit it so end users still need no Node)
 ## Hand it to someone (one prompt, nothing pre-installed)
 
 For a non-technical recipient: they open **Claude Code or Codex** in any folder and
-paste the single prompt below. Their agent installs everything it needs (a Python
-via `uv` if missing — no admin, no Node, no git, no API key), starts the server, and
-runs a canvas — all by following [`BOOTSTRAP.md`](BOOTSTRAP.md). No manual commands,
-no restart (the first run is driven over local HTTP).
+paste the single prompt below. Their agent installs whatever's missing (git, Python —
+Node is never needed, no API keys), clones the repo, starts the server, and runs a
+canvas — all by following [`BOOTSTRAP.md`](BOOTSTRAP.md). No manual commands, no
+restart (the first run is driven over local HTTP).
 
 ```
-你是我的安装助手。帮我在这台电脑上把一个叫 Loom 的本地研究画布工具从零装好并跑起来，全程你来做，我不会敲任何命令。假设我电脑上可能没有 Python、没有 git、没有 Node，也没有任何 API key。
+你是我的安装助手。帮我在这台电脑上把一个叫 Loom 的本地研究画布工具从零装好并跑起来，全程你来做，我不会敲命令。我电脑上可能什么都没装（git、Python、Node 都可能没有）——缺什么你就帮我装什么（用这台机器对应的方式，比如 winget / brew / apt；装 Python 也可以用免管理员的 uv）。没有任何 API key。
 
-按这个顺序做：
-1. 下载并解压项目（别假设我有 git）：下载 https://github.com/Frrrrrrrrank/loom-canvas/archive/refs/heads/main.zip ，解压，进入解压出的 loom-canvas-main 目录。
-2. 阅读该目录里的 BOOTSTRAP.md，并严格按它做：缺 Python 就按它说的用 uv 装一个（免管理员）；建好环境、装依赖、在后台启动本地服务，确认 http://127.0.0.1:8765 能打开，然后让我在浏览器打开它。
-3. 不用我重启或改任何配置——按 BOOTSTRAP.md，第一次直接通过本地 HTTP 接口驱动画布。
-4. 然后帮我搭一个「<把这里换成你的研究主题，例如：lululemon 中国市场增长策略>」的研究画布并真的跑一遍：真实联网搜索逐节点填充，互相无依赖的研究节点并行跑，storyline 出 2-3 个版本让我挑，结论都带来源。边做边让我在 http://127.0.0.1:8765 看着它长出来。
+步骤：
+1. 确保有 git 和 Python 3.10+，缺就装上（Node 不需要）。
+2. git clone https://github.com/Frrrrrrrrank/loom-canvas.git ，进入目录，读 BOOTSTRAP.md 并照做：python setup.py 建好环境装依赖、在后台启动 server/run.py、确认 http://127.0.0.1:8765 能打开，让我在浏览器打开它。
+3. 第一次不用我重启或改配置——按 BOOTSTRAP.md 直接用本地 HTTP 接口驱动画布。
+4. 帮我搭一个「<把这里换成你的研究主题，例如：lululemon 中国市场增长策略>」的研究画布并真的跑一遍：真实联网搜索逐节点填充，互相无依赖的节点并行跑，storyline 出 2-3 版让我挑，结论都带来源。边做边让我在 http://127.0.0.1:8765 看着它长出来。
 
-任何一步若需要我确认（装软件要权限、要输密码等），就停下用一句话告诉我点什么。
+哪一步需要我确认（装东西要权限/密码）就停下用一句话告诉我点什么。
 ```
 
 ## Config (env vars)
