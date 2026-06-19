@@ -78,7 +78,9 @@ def make_venv() -> None:
         ok(f"virtualenv already present at {VENV}")
         return
     if have("uv"):
-        run(["uv", "venv", str(VENV)])
+        # reuse the interpreter running setup.py (guaranteed >=3.10 by check_python),
+        # which may itself be a uv-managed Python on a machine with no system Python
+        run(["uv", "venv", "--python", sys.executable, str(VENV)])
     else:
         run([sys.executable, "-m", "venv", str(VENV)])
     ok("virtualenv created")

@@ -4,6 +4,11 @@ Loom is a local **research canvas** that *you* drive. You design a multi-agent
 research workflow on a visual canvas and then execute it yourself — all reasoning
 is yours, there is no LLM in the server and no API key.
 
+## Setting up from scratch (nothing pre-installed)
+If the machine may lack Python / git / Node, follow `BOOTSTRAP.md` — it covers
+installing a Python via `uv` (no admin), getting the code without git, and driving
+the canvas over HTTP with **no restart**. The steps below assume Python ≥ 3.10 exists.
+
 ## First run (repo just cloned)
 1. `python setup.py` — creates a venv, installs deps, prints the MCP config block.
 2. Start the canvas server and leave it running:
