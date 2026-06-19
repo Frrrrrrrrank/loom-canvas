@@ -19,6 +19,7 @@ from __future__ import annotations
 import asyncio
 import functools
 import json
+import os
 import shutil
 import threading
 import time
@@ -55,25 +56,36 @@ def _synchronized(method):
 
 
 class Broadcaster:
-    """Fan-out async pub/sub for SSE clients."""
+    """Fan-out async pub/sub for SSE clients.
+
+    Mutations (and the auto-save timer) run on worker/timer threads, not the event
+    loop, so we deliver via the subscriber's own loop with call_soon_threadsafe —
+    instant and thread-safe, instead of relying on the SSE keepalive to flush."""
 
     def __init__(self) -> None:
-        self._subscribers: set[asyncio.Queue] = set()
+        self._subs: dict[asyncio.Queue, asyncio.AbstractEventLoop] = {}
 
     def subscribe(self) -> asyncio.Queue:
         q: asyncio.Queue = asyncio.Queue(maxsize=100)
-        self._subscribers.add(q)
+        self._subs[q] = asyncio.get_running_loop()
         return q
 
     def unsubscribe(self, q: asyncio.Queue) -> None:
-        self._subscribers.discard(q)
+        self._subs.pop(q, None)
+
+    @staticmethod
+    def _safe_put(q: asyncio.Queue, event: dict[str, Any]) -> None:
+        try:
+            q.put_nowait(event)
+        except asyncio.QueueFull:
+            pass
 
     def publish(self, event: dict[str, Any]) -> None:
-        for q in list(self._subscribers):
+        for q, loop in list(self._subs.items()):
             try:
-                q.put_nowait(event)
-            except asyncio.QueueFull:
-                self._subscribers.discard(q)
+                loop.call_soon_threadsafe(self._safe_put, q, event)
+            except RuntimeError:
+                self._subs.pop(q, None)
 
 
 def _new_id() -> str:
@@ -90,6 +102,11 @@ class Store:
         self.active_pid: str = ""
         self.meta: ProjectMeta = ProjectMeta(id="")
         self.graph: Graph = Graph()
+        # idle auto-save: a debounced snapshot fires this many seconds after the
+        # last edit (0 disables). Auto-checkpoints are capped at _autosave_max.
+        self._autosave_idle = float(os.environ.get("LOOM_AUTOSAVE_IDLE", "60"))
+        self._autosave_max = int(os.environ.get("LOOM_AUTOSAVE_MAX", "40"))
+        self._autosave_timer: Optional[threading.Timer] = None
         self._bootstrap()
 
     # ============== paths ==============
@@ -176,6 +193,69 @@ class Store:
             self.meta.name = self.graph.name
         self._write_json(self._working_path(self.active_pid), self.graph.model_dump())
         self._write_json(self._meta_path(self.active_pid), self.meta.model_dump())
+        self._schedule_autosave()
+
+    # ============== idle auto-save ==============
+    def _schedule_autosave(self) -> None:
+        """(Re)start the debounce timer; fires an auto-checkpoint once edits idle."""
+        if self._autosave_idle <= 0:
+            return
+        if self._autosave_timer is not None:
+            self._autosave_timer.cancel()
+        timer = threading.Timer(self._autosave_idle, self._autosave_fire)
+        timer.daemon = True
+        self._autosave_timer = timer
+        timer.start()
+
+    def _autosave_fire(self) -> None:
+        try:
+            with self._lock:
+                if self._is_dirty():
+                    self._checkpoint_internal("auto-save", auto=True)
+                    self._prune_auto()
+                    self._emit_workspace()
+        except Exception:
+            pass
+
+    def _flush_autosave(self) -> None:
+        """Cancel any pending timer and snapshot the active canvas now if dirty.
+
+        Called before switching/creating a project so the outgoing canvas's
+        unsaved edits become a version instead of being silently carried away."""
+        if self._autosave_timer is not None:
+            self._autosave_timer.cancel()
+            self._autosave_timer = None
+        if self._is_dirty():
+            self._checkpoint_internal("auto-save", auto=True)
+            self._prune_auto()
+
+    def _prune_auto(self) -> None:
+        """Keep at most _autosave_max auto-checkpoints (oldest dropped), so history
+        stays readable. Manual checkpoints and the head are never pruned; children
+        of a dropped node are reparented to its nearest surviving ancestor."""
+        autos = [c for c in self.meta.checkpoints if c.auto and c.id != self.meta.head_id]
+        excess = len(autos) - self._autosave_max
+        if excess <= 0:
+            return
+        to_remove = autos[:excess]
+        remove_ids = {c.id for c in to_remove}
+        parent_of = {c.id: c.parent_id for c in self.meta.checkpoints}
+
+        def survivor(pid: Optional[str]) -> Optional[str]:
+            while pid in remove_ids:
+                pid = parent_of.get(pid)
+            return pid
+
+        for c in self.meta.checkpoints:
+            if c.parent_id in remove_ids:
+                c.parent_id = survivor(c.parent_id)
+        for c in to_remove:
+            try:
+                self._snap_path(self.active_pid, c.id).unlink(missing_ok=True)
+            except Exception:
+                pass
+        self.meta.checkpoints = [c for c in self.meta.checkpoints if c.id not in remove_ids]
+        self._write_json(self._meta_path(self.active_pid), self.meta.model_dump())
 
     def _emit(self, kind: str = "graph") -> None:
         self._persist()
@@ -224,6 +304,7 @@ class Store:
 
     @_synchronized
     def create_project(self, name: str = "") -> dict[str, Any]:
+        self._flush_autosave()  # save the outgoing canvas's unsaved edits first
         pid = self._create_project_files(name or "Untitled Research", Graph())
         self.active_pid = pid
         self._set_active_file()
@@ -237,6 +318,7 @@ class Store:
     def switch_project(self, pid: str) -> dict[str, Any]:
         if not self._meta_path(pid).exists():
             raise KeyError(pid)
+        self._flush_autosave()  # save the outgoing canvas's unsaved edits first
         self.active_pid = pid
         self._set_active_file()
         self._load_active()

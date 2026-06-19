@@ -88,8 +88,10 @@ pnpm build     # rebuild web/dist (commit it so end users still need no Node)
 - **快速追溯** — every result carries its evidence chain with confidence scores.
 - **Multiple canvases** — each study (On Running today, Nike tomorrow) is its own
   project with its own graph and history; switch from the top-left dropdown.
-- **Version history + branching** — save versions, roll back to any point, and
-  branch from an old version (Lovable-style). The ⟲ History panel shows the tree.
+- **Version history + branching** — edits auto-save as a version when you pause
+  (configurable idle, default 60s); save named milestones too. Roll back to any
+  point, and branch from an old version (Lovable-style). The ⟲ History panel
+  shows the tree. Env: `LOOM_AUTOSAVE_IDLE` (seconds, 0 disables), `LOOM_AUTOSAVE_MAX`.
 
 ## Config (env vars)
 - `LOOM_HOST` / `LOOM_PORT` — server bind (default `127.0.0.1:8765`).

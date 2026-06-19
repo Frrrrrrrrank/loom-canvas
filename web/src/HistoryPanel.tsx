@@ -98,8 +98,9 @@ export function HistoryPanel() {
             })}
           </div>
           <p className="loom-history-hint">
-            Restoring an old version and then editing creates a new branch — your other
-            versions stay intact.
+            Edits auto-save as a version when you pause (marked <b>auto</b>); use
+            <b> Save version</b> for named milestones. Restoring an old version and then
+            editing creates a new branch — your other versions stay intact.
           </p>
         </div>
       </div>
