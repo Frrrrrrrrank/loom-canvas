@@ -134,6 +134,7 @@ class AgentRunner:
                 cwd=str(REPO_ROOT),
                 capture_output=True,
                 text=True,
+                stdin=subprocess.DEVNULL,  # don't let `claude -p` block waiting on stdin
                 timeout=float(os.environ.get("LOOM_AGENT_TIMEOUT", "300")),
                 env=env,
             )
