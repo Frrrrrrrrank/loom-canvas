@@ -52,6 +52,32 @@ export interface CardMessage {
   processed: boolean;
 }
 
+export interface ResearchRun {
+  id: string;
+  label: string;
+  status: string;
+  summary: string;
+  created_at: number;
+}
+
+export interface Finding {
+  id: string;
+  text: string;
+  kind: string;
+  sources: Source[];
+  confidence: number;
+  runs: string[];
+  novelty: string;
+  status: string;
+  created_at: number;
+}
+
+export interface Research {
+  question: string;
+  runs: ResearchRun[];
+  findings: Finding[];
+}
+
 export interface GraphNode {
   id: string;
   role: NodeRole;
@@ -66,6 +92,7 @@ export interface GraphNode {
   status: NodeStatus;
   versions: ResultVersion[];
   thread: CardMessage[];
+  research?: Research | null;
   position: { x: number; y: number };
 }
 
@@ -188,6 +215,16 @@ export const api = {
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ text }),
     }),
+
+  setFindingStatus: (id: string, findingId: string, status: string) =>
+    fetch(
+      `/api/nodes/${encodeURIComponent(id)}/research/finding/${encodeURIComponent(findingId)}`,
+      {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ status }),
+      },
+    ),
 
   getAgent: () => fetch("/api/agent").then((r) => j<AgentStatus>(r)),
   setAgent: (enabled: boolean) =>

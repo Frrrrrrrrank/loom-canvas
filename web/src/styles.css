@@ -435,6 +435,207 @@ body {
 .loom-addcard-name { font-size: 13px; font-weight: 600; }
 .loom-addcard-blurb { font-size: 11px; color: var(--text-faint); }
 
+/* ---------- research card (compact) ---------- */
+.loom-research-card {
+  margin-top: 9px;
+  border-top: 1px solid var(--line);
+  padding-top: 8px;
+}
+.loom-run-dots {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.loom-run-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--blue);
+}
+.loom-run-dot.status-running {
+  background: var(--amber);
+  animation: pulse 1s ease-in-out infinite;
+}
+.loom-run-dot.status-error { background: var(--red); }
+@keyframes pulse { 50% { opacity: 0.3; } }
+.loom-run-count {
+  font-size: 10px;
+  color: var(--text-faint);
+  margin-left: 2px;
+}
+.loom-research-counts {
+  display: flex;
+  gap: 10px;
+  margin-top: 7px;
+  font-size: 11px;
+}
+.loom-research-counts .cor { color: var(--green); }
+.loom-research-counts .mar { color: var(--amber); }
+.loom-research-counts .acc { color: var(--accent-2); }
+
+/* ---------- research summary (inspector) ---------- */
+.loom-research-sum {
+  margin: 12px 0;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--panel);
+}
+.loom-research-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  font-size: 12px;
+  color: var(--text-dim);
+  margin-bottom: 10px;
+}
+.loom-research-stats .loom-accepted { color: var(--accent-2); font-weight: 600; }
+
+/* ---------- research reading mode ---------- */
+.loom-reader {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.loom-reader-q {
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--text);
+}
+.loom-runs {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+}
+.loom-run {
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--blue);
+  border-radius: 10px;
+  padding: 10px 12px;
+  background: var(--panel);
+}
+.loom-run.status-running { border-left-color: var(--amber); }
+.loom-run.status-error { border-left-color: var(--red); }
+.loom-run-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+.loom-run-label { font-weight: 600; font-size: 13px; }
+.loom-run-summary {
+  font-size: 12px;
+  color: var(--text-dim);
+  max-height: 220px;
+  overflow-y: auto;
+}
+.loom-findings-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 4px;
+}
+.loom-filter { display: flex; gap: 4px; }
+.loom-filter-btn {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  color: var(--text-dim);
+  font-size: 11px;
+  padding: 3px 10px;
+  border-radius: 7px;
+  cursor: pointer;
+}
+.loom-filter-btn.on { border-color: var(--accent); color: var(--text); background: #7c6cff18; }
+.loom-findings { display: flex; flex-direction: column; gap: 7px; }
+.loom-finding {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 9px 11px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: var(--panel);
+}
+.loom-finding.accepted { border-color: color-mix(in srgb, var(--accent) 45%, transparent); background: #7c6cff0f; }
+.loom-finding.rejected { opacity: 0.5; }
+.loom-finding.novelty-marginal { border-left: 3px solid var(--amber); }
+.loom-finding.novelty-corroborated { border-left: 3px solid var(--green); }
+.loom-finding-acc {
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  border: 1px solid var(--line-2);
+  background: var(--panel-2);
+  color: var(--text-dim);
+  cursor: pointer;
+  font-size: 13px;
+}
+.loom-finding.accepted .loom-finding-acc { background: var(--accent); color: #fff; border-color: var(--accent); }
+.loom-finding-body { flex: 1; min-width: 0; }
+.loom-finding-text { font-size: 13px; color: var(--text); line-height: 1.45; }
+.loom-kind {
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: var(--panel-2);
+  color: var(--text-faint);
+  margin-right: 7px;
+}
+.loom-kind.number { color: var(--blue); }
+.loom-kind.judgment { color: var(--accent-2); }
+.loom-finding-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 6px;
+}
+.loom-novelty { font-size: 10.5px; }
+.loom-novelty.corroborated { color: var(--green); }
+.loom-novelty.marginal { color: var(--amber); }
+.loom-finding-src {
+  font-size: 11px;
+  color: var(--text-dim);
+  text-decoration: none;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 1px 7px;
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.loom-finding-src:hover { border-color: var(--accent); }
+.loom-src-conf { color: var(--green); }
+.loom-conf {
+  flex-shrink: 0;
+  width: 90px;
+  height: 18px;
+  border-radius: 5px;
+  background: var(--panel-2);
+  position: relative;
+  overflow: hidden;
+}
+.loom-conf-fill { height: 100%; }
+.loom-conf-fill.high { background: var(--green); }
+.loom-conf-fill.mid { background: var(--amber); }
+.loom-conf-fill.low { background: var(--red); }
+.loom-conf-num {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  color: var(--text);
+  mix-blend-mode: difference;
+}
+
 /* ---------- card chat / inbox ---------- */
 .loom-inbox {
   display: inline-flex;

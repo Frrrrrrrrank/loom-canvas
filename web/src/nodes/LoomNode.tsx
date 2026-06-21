@@ -84,9 +84,33 @@ function LoomNodeInner({ data }: { data: { node: GraphNode } }) {
 
       {(node.role === "research" || node.role === "note") &&
         (node.instruction || f.question) &&
-        !version && (
+        !version &&
+        !node.research && (
           <div className="loom-node-instruction">{f.question || node.instruction}</div>
         )}
+
+      {node.role === "research" && node.research && (
+        <div className="loom-research-card">
+          <div className="loom-run-dots">
+            {node.research.runs.map((r) => (
+              <span key={r.id} className={`loom-run-dot status-${r.status}`} title={r.label} />
+            ))}
+            <span className="loom-run-count">{node.research.runs.length} runs</span>
+          </div>
+          <div className="loom-research-counts">
+            <span className="cor">
+              ✦ {node.research.findings.filter((x) => x.novelty === "corroborated").length}
+            </span>
+            <span className="mar">
+              △ {node.research.findings.filter((x) => x.novelty === "marginal").length}
+            </span>
+            {(() => {
+              const acc = node.research.findings.filter((x) => x.status === "accepted").length;
+              return acc > 0 ? <span className="acc">✓ {acc}</span> : null;
+            })()}
+          </div>
+        </div>
+      )}
 
       {node.tools.length > 0 && (
         <div className="loom-tools">

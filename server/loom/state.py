@@ -32,10 +32,13 @@ from .models import (
     CardMessage,
     Checkpoint,
     Edge,
+    Finding,
     Graph,
     Node,
     Position,
     ProjectMeta,
+    Research,
+    ResearchRun,
     ResultVersion,
     Source,
     relation_for_roles,
@@ -689,6 +692,74 @@ class Store:
         node.status = status  # type: ignore[assignment]
         self._emit()
         return node
+
+    # ============== research card (multi-run deep research) ==============
+    def _ensure_research(self, node: Node) -> Research:
+        if node.research is None:
+            node.research = Research(
+                question=node.fields.get("question") or node.instruction or ""
+            )
+        return node.research
+
+    @_synchronized
+    def add_research_run(
+        self,
+        node_id: str,
+        run_id: str = "",
+        summary: str = "",
+        label: str = "",
+        status: str = "complete",
+    ) -> Node:
+        node = self.graph.node(node_id)
+        if not node:
+            raise KeyError(node_id)
+        r = self._ensure_research(node)
+        rid = run_id or _new_id()
+        existing = next((i for i, x in enumerate(r.runs) if x.id == rid), None)
+        run = ResearchRun(
+            id=rid, label=label or rid or f"run {len(r.runs) + 1}",
+            summary=summary, status=status,  # type: ignore[arg-type]
+        )
+        if existing is not None:
+            r.runs[existing] = run
+        else:
+            r.runs.append(run)
+        if status == "running":
+            node.status = "running"
+        self._emit()
+        return node
+
+    @_synchronized
+    def upsert_findings(self, node_id: str, findings: list[dict[str, Any]]) -> Node:
+        node = self.graph.node(node_id)
+        if not node:
+            raise KeyError(node_id)
+        r = self._ensure_research(node)
+        index = {f.id: i for i, f in enumerate(r.findings)}
+        for fd in findings:
+            data = {**fd}
+            fid = data.get("id") or _new_id()
+            data["id"] = fid
+            model = Finding.model_validate(data)
+            if fid in index:
+                r.findings[index[fid]] = model
+            else:
+                index[fid] = len(r.findings)
+                r.findings.append(model)
+        self._emit()
+        return node
+
+    @_synchronized
+    def set_finding_status(self, node_id: str, finding_id: str, status: str) -> Node:
+        node = self.graph.node(node_id)
+        if not node or node.research is None:
+            raise KeyError(node_id)
+        for f in node.research.findings:
+            if f.id == finding_id:
+                f.status = status  # type: ignore[assignment]
+                self._emit()
+                return node
+        raise KeyError(finding_id)
 
     # ============== layout helper ==============
     def _auto_position(self) -> Position:

@@ -319,6 +319,47 @@ def restore_checkpoint(checkpoint_id: str) -> dict[str, Any]:
     return _after(_call("POST", f"/api/checkpoints/{checkpoint_id}/restore"))
 
 
+# ============== research card (multi-run deep research) ==============
+@mcp.tool()
+def add_research_run(
+    node_id: str, run_id: str, summary: str = "", label: str = "", status: str = "complete"
+) -> dict[str, Any]:
+    """Record one deep-research pass on a research card. Run 3-4 of these CONCURRENTLY
+    by launching one subagent per run in a single message — each does an independent
+    deep research on the card's question. Call this as each subagent finishes (status
+    'running' first if you want it to show live, then 'complete'); `summary` = that
+    run's narrative. Use a stable `run_id` like 'run1' so findings can reference it."""
+    return _after(
+        _call("POST", f"/api/nodes/{node_id}/research/run",
+              json={"run_id": run_id, "summary": summary, "label": label, "status": status})
+    )
+
+
+@mcp.tool()
+def add_findings(node_id: str, findings: list[dict[str, Any]]) -> dict[str, Any]:
+    """Add/merge atomic findings on a research card (the traceable unit). After the
+    runs finish, do a MERGE pass and write findings, each:
+      {"id":"f1","text":"台湾运动鞋市场 ~NT$32B","kind":"number",
+       "sources":[{"type":"url","ref":"https://...","label":"IMARC","confidence":0.8}],
+       "confidence":0.75, "runs":["run1","run2"], "novelty":"corroborated",
+       "status":"candidate"}
+    confidence (0..1) = source provenance × how many sources/runs corroborate it.
+    novelty: 'corroborated' (≥2 runs agree) or 'marginal' (one run's increment).
+    kind: number | fact | judgment. Reuse a stable `id` to update a finding.
+    Leave status 'candidate' — the human accepts/rejects on the canvas (or you can
+    pre-accept the high-confidence corroborated ones)."""
+    return _after(_call("POST", f"/api/nodes/{node_id}/research/findings", json={"findings": findings}))
+
+
+@mcp.tool()
+def set_finding_status(node_id: str, finding_id: str, status: str) -> dict[str, Any]:
+    """Accept / reject a finding: status = accepted | rejected | candidate. Only
+    accepted findings feed downstream synthesis."""
+    return _after(
+        _call("POST", f"/api/nodes/{node_id}/research/finding/{finding_id}", json={"status": status})
+    )
+
+
 # ============== card chat / inbox (in-card discussion) ==============
 @mcp.tool()
 def get_inbox() -> Any:

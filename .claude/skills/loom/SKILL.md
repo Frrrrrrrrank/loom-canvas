@@ -108,6 +108,32 @@ Every result should carry its evidence chain in `sources`:
   {"type":"node","ref":"social"}]`. Use `type:"node"` to point a synthesis back
 to the upstream research it drew from. This is what makes a conclusion auditable.
 
+## Running a Research card — concurrent deep research (the core engine)
+A research card is a **multi-run deep-research task**, not a single pass. To run one:
+
+1. Fan out **3-4 deep-research subagents IN PARALLEL** — one Task/Agent per run, all
+   in a single message so they run concurrently. Each does an independent deep
+   research on the card's question (vary the angle/seed so they don't all find the
+   same thing). As each starts, `add_research_run(id, run_id="run1", status="running")`
+   so the canvas shows it live; when it finishes, call it again with its `summary` and
+   `status="complete"`.
+2. **Merge pass** — once the runs are in, distill atomic findings and write them with
+   `add_findings`. Each finding is the unit of traceability: the claim/number, its
+   `sources`, a per-finding `confidence` (0..1 = source provenance × how many
+   sources/runs corroborate it — NOT the source's own confidence), the `runs` that
+   surfaced it, and `novelty`:
+   - **corroborated** — ≥2 runs independently found it → higher confidence.
+   - **marginal** — only one run surfaced it → the marginal increment that run added;
+     flag it so the human decides if it's worth keeping.
+3. Optionally pre-`set_finding_status(..., "accepted")` for high-confidence
+   corroborated facts; leave the rest `candidate` for the human to accept/reject in
+   the reading mode. Only **accepted** findings should feed Synthesis.
+4. Every number must trace back: put real URLs/docs in `sources`. Downstream synthesis
+   reads each research card's accepted findings (via get_node), not raw runs.
+
+This is where Loom leans hardest on your multi-agent ability — parallel runs +
+cross-run corroboration are what make the research deep and auditable.
+
 ## In-card discussion (the inbox)
 The user can chat with a card right on the canvas — "go collect more on momo's
 commission", or "this point contradicts my read, let's debate it". These notes

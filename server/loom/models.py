@@ -86,6 +86,49 @@ class Artifact(BaseModel):
     type: str = Field("file", description="pptx | html | png | csv | ...")
 
 
+FindingKind = Literal["number", "fact", "judgment"]
+FindingNovelty = Literal["corroborated", "marginal"]
+FindingStatus = Literal["candidate", "accepted", "rejected"]
+RunStatus = Literal["running", "complete", "error"]
+
+
+class ResearchRun(BaseModel):
+    """One concurrent deep-research pass (run by one CC/Codex subagent)."""
+
+    id: str
+    label: str = ""
+    status: RunStatus = "complete"
+    summary: str = Field("", description="markdown narrative of what this run found")
+    created_at: float = Field(default_factory=_now)
+
+
+class Finding(BaseModel):
+    """An atomic claim/number distilled from the runs — the unit of traceability.
+
+    confidence is per-finding (per the user's spec: we care about the confidence of
+    each NUMBER, derived from source provenance × how many sources/runs corroborate
+    it), not per-source. novelty flags whether multiple runs agreed (corroborated)
+    or it's a marginal increment only one run surfaced — the human then accepts/rejects."""
+
+    id: str
+    text: str
+    kind: FindingKind = "fact"
+    sources: list[Source] = Field(default_factory=list)
+    confidence: float = Field(0.0, description="0..1, from provenance × corroboration")
+    runs: list[str] = Field(default_factory=list, description="run ids that surfaced this")
+    novelty: FindingNovelty = "corroborated"
+    status: FindingStatus = "candidate"
+    created_at: float = Field(default_factory=_now)
+
+
+class Research(BaseModel):
+    """The multi-run payload of a research card."""
+
+    question: str = ""
+    runs: list[ResearchRun] = Field(default_factory=list)
+    findings: list[Finding] = Field(default_factory=list)
+
+
 class ResultVersion(BaseModel):
     """One 'card' in the 并发试错 deck for a node."""
 
@@ -138,6 +181,9 @@ class Node(BaseModel):
     status: NodeStatus = "idle"
     versions: list[ResultVersion] = Field(default_factory=list)
     thread: list[CardMessage] = Field(default_factory=list)
+    research: Optional[Research] = Field(
+        default=None, description="multi-run payload (research-role cards only)"
+    )
     position: Position = Field(default_factory=Position)
 
     def unprocessed(self) -> int:

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { api, type GraphNode } from "./api";
 import { ContentRenderer } from "./ContentRenderer";
+import { ResearchReader } from "./ResearchReader";
 import { ISSUE_STATUS, ROLE_FIELDS, ROLE_ORDER, roleMeta } from "./roles";
 import { useStore } from "./store";
 
@@ -74,7 +75,7 @@ function InspectorBody({
           )}
         </div>
         <div className="loom-insp-actions">
-          {node.versions.length > 0 && (
+          {(node.versions.length > 0 || (node.role === "research" && node.research)) && (
             <button className="loom-btn ghost" onClick={onFullscreen} title="Fullscreen">⛶</button>
           )}
           <button className="loom-btn ghost" onClick={onClose} title="Close">✕</button>
@@ -148,6 +149,10 @@ function InspectorBody({
             <span key={t} className="loom-tool-chip">{t}</span>
           ))}
         </div>
+      )}
+
+      {node.role === "research" && node.research && (
+        <ResearchSummary node={node} onOpen={onFullscreen} />
       )}
 
       {node.versions.length > 1 && (
@@ -268,6 +273,29 @@ function CardChat({ node }: { node: GraphNode }) {
   );
 }
 
+function ResearchSummary({ node, onOpen }: { node: GraphNode; onOpen: () => void }) {
+  const r = node.research!;
+  const corroborated = r.findings.filter((f) => f.novelty === "corroborated").length;
+  const marginal = r.findings.filter((f) => f.novelty === "marginal").length;
+  const accepted = r.findings.filter((f) => f.status === "accepted").length;
+  return (
+    <div className="loom-research-sum">
+      <div className="loom-research-stats">
+        <span>{r.runs.length} runs</span>
+        <span>·</span>
+        <span>{corroborated} corroborated</span>
+        <span>·</span>
+        <span>{marginal} marginal</span>
+        <span>·</span>
+        <span className="loom-accepted">{accepted} accepted</span>
+      </div>
+      <button className="loom-btn accent" onClick={onOpen}>
+        Open reading mode →
+      </button>
+    </div>
+  );
+}
+
 function RoleBrief({ node }: { node: GraphNode }) {
   const f = node.fields ?? {};
   const roleFields = ROLE_FIELDS[node.role] ?? [];
@@ -303,16 +331,21 @@ export function FullscreenModal() {
   const node = useStore((s) => s.graph?.nodes.find((n) => n.id === fullscreenNodeId));
   const setFullscreen = useStore((s) => s.setFullscreen);
   if (!node) return null;
+  const isResearch = node.role === "research" && node.research;
   const v = node.versions.find((x) => x.selected) ?? node.versions[node.versions.length - 1];
   return (
     <div className="loom-modal-backdrop" onClick={() => setFullscreen(null)}>
       <div className="loom-modal" onClick={(e) => e.stopPropagation()}>
         <header className="loom-modal-head">
-          <h3>{node.label || node.id}</h3>
+          <h3>
+            {roleMeta(node.role).icon} {node.label || node.id}
+          </h3>
           <button className="loom-btn ghost" onClick={() => setFullscreen(null)}>✕</button>
         </header>
         <div className="loom-modal-body">
-          {v ? (
+          {isResearch ? (
+            <ResearchReader node={node} />
+          ) : v ? (
             <ContentRenderer content={v.content} contentType={v.content_type} />
           ) : (
             <div className="loom-empty">No result.</div>

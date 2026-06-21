@@ -357,6 +357,48 @@ def select_version(node_id: str, body: SelectBody) -> dict[str, Any]:
         raise HTTPException(404, str(e))
 
 
+# ================= API: research card (multi-run) =================
+class RunBody(BaseModel):
+    run_id: str = ""
+    label: str = ""
+    summary: str = ""
+    status: str = "complete"
+
+
+class FindingsBody(BaseModel):
+    findings: list[dict[str, Any]]
+
+
+class FindingStatusBody(BaseModel):
+    status: str
+
+
+@app.post("/api/nodes/{node_id}/research/run")
+def add_research_run(node_id: str, body: RunBody) -> dict[str, Any]:
+    try:
+        return store.add_research_run(
+            node_id, body.run_id, body.summary, body.label, body.status
+        ).model_dump()
+    except KeyError:
+        raise HTTPException(404, f"node '{node_id}' not found")
+
+
+@app.post("/api/nodes/{node_id}/research/findings")
+def upsert_findings(node_id: str, body: FindingsBody) -> dict[str, Any]:
+    try:
+        return store.upsert_findings(node_id, body.findings).model_dump()
+    except KeyError:
+        raise HTTPException(404, f"node '{node_id}' not found")
+
+
+@app.post("/api/nodes/{node_id}/research/finding/{finding_id}")
+def set_finding_status(node_id: str, finding_id: str, body: FindingStatusBody) -> dict[str, Any]:
+    try:
+        return store.set_finding_status(node_id, finding_id, body.status).model_dump()
+    except KeyError as e:
+        raise HTTPException(404, str(e))
+
+
 # ================= API: card chat / inbox =================
 @app.post("/api/nodes/{node_id}/message")
 def add_message(node_id: str, body: MessageBody) -> dict[str, Any]:
