@@ -49,9 +49,11 @@ class MetaBody(BaseModel):
 
 class NodeBody(BaseModel):
     id: str
+    role: str = "note"
     type: str = "agent"
     label: str = ""
     instruction: str = ""
+    fields: dict[str, Any] = {}
     model: str = ""
     tools: list[str] = []
     category: str = "general"
@@ -71,6 +73,7 @@ class MoveBody(BaseModel):
 class EdgeBody(BaseModel):
     source: str
     target: str
+    relation: Optional[str] = None
     label: Optional[str] = None
     condition: Optional[str] = None
 
@@ -120,7 +123,8 @@ def get_run_plan() -> dict[str, Any]:
     steps = []
     for nid in order:
         node = g.node(nid)
-        if not node or node.type not in ("agent", "function", "output"):
+        # core_question / issue are framing (not executed); research/synthesis/output run
+        if not node or node.role not in ("research", "synthesis", "output"):
             continue
         upstream = g.upstream(nid)
         upstream_results = []
@@ -142,11 +146,11 @@ def get_run_plan() -> dict[str, Any]:
             {
                 "id": nid,
                 "label": node.label,
+                "role": node.role,
                 "type": node.type,
-                "category": node.category,
                 "instruction": node.instruction,
+                "fields": node.fields,
                 "tools": node.tools,
-                "config": node.config,
                 "upstream": upstream,
                 "upstream_results": upstream_results,
                 "status": node.status,
@@ -268,9 +272,11 @@ def set_entry(node_id: str) -> dict[str, Any]:
 def add_node(body: NodeBody) -> dict[str, Any]:
     node = Node(
         id=body.id,
+        role=body.role,  # type: ignore[arg-type]
         type=body.type,  # type: ignore[arg-type]
         label=body.label or body.id,
         instruction=body.instruction,
+        fields=body.fields,
         model=body.model,
         tools=body.tools,
         category=body.category,
@@ -347,7 +353,9 @@ def select_version(node_id: str, body: SelectBody) -> dict[str, Any]:
 @app.post("/api/edges")
 def add_edge(body: EdgeBody) -> dict[str, Any]:
     try:
-        return store.add_edge(body.source, body.target, body.label, body.condition).model_dump()
+        return store.add_edge(
+            body.source, body.target, body.label, body.condition, body.relation
+        ).model_dump()
     except KeyError as e:
         raise HTTPException(404, f"node not found: {e}")
     except ValueError as e:

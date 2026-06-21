@@ -37,6 +37,7 @@ from .models import (
     ProjectMeta,
     ResultVersion,
     Source,
+    relation_for_roles,
 )
 
 
@@ -441,6 +442,8 @@ class Store:
         if description is not None:
             self.graph.description = description
         self._emit()
+        if name is not None:
+            self._emit_workspace()  # project display name changed → refresh switcher/home
         return self.graph
 
     @_synchronized
@@ -460,7 +463,10 @@ class Store:
         if node.position.x == 0 and node.position.y == 0:
             node.position = self._auto_position()
         self.graph.nodes.append(node)
-        if self.graph.entry_point is None and node.type in ("agent", "input"):
+        # the core question is the root; otherwise seed entry with the first node
+        if node.role == "core_question":
+            self.graph.entry_point = node.id
+        elif self.graph.entry_point is None and node.role in ("issue", "research", "note"):
             self.graph.entry_point = node.id
         self._emit()
         return node
@@ -472,13 +478,15 @@ class Store:
             raise KeyError(node_id)
         allowed = {
             "label", "instruction", "model", "tools", "category",
-            "config", "status", "type", "position",
+            "config", "status", "type", "position", "role", "fields",
         }
         for k, v in changes.items():
             if k not in allowed:
                 continue
             if k == "position" and isinstance(v, dict):
                 node.position = Position.model_validate(v)
+            elif k == "fields" and isinstance(v, dict):
+                node.fields = {**node.fields, **v}  # merge, don't clobber
             else:
                 setattr(node, k, v)
         self._emit()
@@ -524,15 +532,23 @@ class Store:
         target: str,
         label: Optional[str] = None,
         condition: Optional[str] = None,
+        relation: Optional[str] = None,
     ) -> Edge:
-        if not self.graph.node(source):
+        src = self.graph.node(source)
+        tgt = self.graph.node(target)
+        if not src:
             raise KeyError(source)
-        if not self.graph.node(target):
+        if not tgt:
             raise KeyError(target)
         edge_id = f"{source}->{target}"
         if any(e.id == edge_id for e in self.graph.edges):
             raise ValueError(f"edge '{edge_id}' already exists")
-        edge = Edge(id=edge_id, source=source, target=target, label=label, condition=condition)
+        # derive the typed meaning from the roles it connects unless given
+        rel = relation or relation_for_roles(src.role, tgt.role)
+        edge = Edge(
+            id=edge_id, source=source, target=target,
+            relation=rel, label=label, condition=condition,
+        )
         self.graph.edges.append(edge)
         self._emit()
         return edge

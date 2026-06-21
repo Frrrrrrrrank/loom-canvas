@@ -28,29 +28,36 @@ writing each result back so it appears on the canvas.
   starting a new study, not when the user already created the canvas themselves.
 
 ## Phase 1 — Design from a brief
-Given a project brief (e.g. "On Running 台湾市场进入策略"), build a graph that
-mirrors a real consulting workflow. Default shape:
+Cards have **roles** that mirror a consulting research structure. Build with the
+right role for each card (pass `role` to `add_node`):
 
-1. an **input** node for the brief,
-2. an **orchestrator** node = the *storyline* (拆解客户需求成 N 个研究模块),
-3. several **research** nodes (one per module — see `methodology.md`),
-4. one **analysis** node (synthesis / 交叉分析 / 提纯),
-5. an **output** node (the deck / report).
+1. one **core_question** card — the central question + boundary. Fill `fields`:
+   `{basic_question, context, criteria_for_success, scope}`.
+2. a few **issue** cards — the issue/hypothesis tree (拆解 core question). Each
+   `fields`: `{issue, hypothesis, status:"untested"}`.
+3. **research** cards — the evidence-gathering tasks. `instruction` (or
+   `fields.question`) = the research question; `tools` hints (`web_search`,
+   `social_listening`, `expert_network`, ...). **Issue↔Research is many-to-many**:
+   connect one issue to several research cards, and a research card to several issues.
+4. one **synthesis** card — distills the connected research into a storyline
+   (the old "storyline", now placed *after* research; supports multiple versions).
+5. one **output** card — the deck / visualization.
 
-Use incremental tools for clarity: `add_node` then `connect`. Give every node a
-short `instruction` (its brief) and realistic `tools` hints
-(`web_search`, `social_listening`, `expert_network`, ...). Set the entry point.
-Lay nodes left→right by passing `x`/`y` (input x≈40, storyline/research x≈360,
-analysis x≈720, output x≈1060; stack siblings ~200px apart in y) so the canvas
-reads as a pipeline.
+`connect` auto-labels the edge by the roles it joins (core_question→issue = breaks
+down, issue→research = supports, research→synthesis = distills, synthesis→output =
+visualizes, research→issue = evidence). Don't force the full chain — a study may
+start straight at research. The core_question is the root/entry automatically.
 
-For a full template in one shot, `replace_graph` with a JSON graph — but prefer
-incremental edits when adjusting an existing canvas.
+Lay cards left→right by `x`/`y` (core_question x≈40, issues x≈380, research x≈720,
+synthesis x≈1060, output x≈1400; stack siblings ~180px apart in y).
 
-When the user edits in natural language ("把 social listening 改成只看小红书+抖音，300 条"
-or "再给 storyline 生成 4 个版本"), translate that into `update_node` /
-`add_node` / `connect` calls. The user may also drag/edit on the canvas directly;
-re-`get_graph` to resync before large edits.
+For bulk scaffolding use `replace_graph` (the JSON node uses `role` + `fields`);
+prefer incremental `add_node`/`connect` for edits. As research completes, update the
+relevant issue's `fields.status` to supported/challenged/mixed via `update_node`.
+
+When the user edits in natural language ("把 social listening 改成只看小红书+抖音"
+or "给 synthesis 再生成两版"), translate into `update_node`/`add_node`/`connect`.
+The user may also drag/edit on the canvas; re-`get_graph` to resync before big edits.
 
 ## Phase 2 — Run the canvas
 When the user says "运行 / run / 执行画布":

@@ -3,14 +3,20 @@
 Reference for building research canvases that mirror how a real consulting team
 works. The model picks/adapts these; they are not a rigid SOP (咨询是灵活的).
 
-## Node categories (canvas vocabulary)
-- `input` — the project brief / client context.
-- `orchestrator` — the **storyline**: decomposes the brief into MECE research
-  modules and plans the deliverable narrative. This is where 故事线/storyline lives.
-- `research` — a primary or desk research module that gathers raw data.
-- `analysis` — synthesis: turns raw data into insight (提纯), cross-references
-  modules, builds comparisons and frameworks.
-- `output` — the deck/report deliverable (usually `slides`/`html`).
+## Card roles (canvas vocabulary)
+- `core_question` — ONE per study: the central question + boundary. fields:
+  `{basic_question, context, criteria_for_success, scope}`.
+- `issue` — an issue/hypothesis in the issue tree. fields: `{issue, hypothesis,
+  status}`. As research lands, update `status` (untested→supported/challenged/mixed).
+- `research` — a (deep) research task that gathers evidence (desk/social/expert/...).
+  Many-to-many with issues.
+- `synthesis` — distills the connected research into a storyline (提炼/归纳), placed
+  *after* research; supports multiple versions (抽卡).
+- `output` — the deck/visualization deliverable (usually `slides`/`html`).
+
+Edges are typed by the roles they join: decompose (core_question→issue), support
+(issue→research), distill (research→synthesis), visualize (synthesis→output),
+evidence (research→issue).
 
 ## Research modules (pick what the brief needs)
 - **Desk research** (`web_search`) — market size, growth, regulation, competitor set.

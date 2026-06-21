@@ -33,9 +33,11 @@ only Python. (Node is needed only to modify the frontend.)
 ## Using Loom (once the `loom` MCP tools are connected)
 A `loom` skill is installed under `.claude/skills/loom/` — follow it. In short:
 
-- **Design**: call `get_graph`, then build the canvas with `add_node` / `connect`
-  (input brief → orchestrator/storyline → research nodes → analysis → output deck).
-  The canvas updates live in the browser.
+- **Design**: call `get_graph`, then build with `add_node` / `connect` using card
+  **roles**: core_question → issue(s) → research → synthesis → output (free-form;
+  issue↔research is many-to-many; edges auto-label by role). Fill role `fields`
+  (core_question: basic_question/context/criteria_for_success/scope; issue:
+  issue/hypothesis/status). The canvas updates live in the browser.
 - **Run**: call `get_run_plan` — it returns `levels`, groups of nodes with no
   dependency on each other. Run level by level, but **within a level run the nodes
   in parallel by launching one subagent per node in a single message** (a single

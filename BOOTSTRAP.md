@@ -61,14 +61,15 @@ Base URL = `http://127.0.0.1:8765`. Send JSON bodies (curl:
 |---|---|
 | new canvas | `POST /api/projects` `{"name":"<study title>"}` |
 | set title/desc | `PATCH /api/graph` `{"name":"...","description":"..."}` |
-| add node | `POST /api/nodes` `{"id":"social","label":"Social Listening","instruction":"IG+小红书, 台湾, 近90天","type":"agent","category":"research","tools":["social_listening"]}` |
-| connect | `POST /api/edges` `{"source":"brief","target":"social"}` |
+| add card | `POST /api/nodes` `{"id":"social","role":"research","label":"Social Listening","instruction":"IG+小红书, 台湾, 近90天","fields":{"question":"..."},"tools":["social_listening"]}` |
+| connect | `POST /api/edges` `{"source":"cq","target":"i_channel"}` (relation auto-derived) |
 | entry point | `POST /api/graph/entry/<id>` |
 | read | `GET /api/graph` |
 
-`type`: `input` (the brief) · `agent` (research/analysis/storyline) · `output` (the deck).
-`category` (for agents): `orchestrator` (storyline) · `research` · `analysis` · `general`.
-Shape: **input(brief) → orchestrator(storyline) → research nodes → analysis(synthesis) → output(deck)**.
+`role`: `core_question` (one per study; fields `{basic_question,context,criteria_for_success,scope}`)
+· `issue` (fields `{issue,hypothesis,status}`) · `research` · `synthesis` · `output` · `note`.
+Shape: **core_question → issue(s) → research → synthesis → output** (free-form; may start at research).
+Issue↔research is many-to-many. Edges auto-label by role (decompose/support/distill/visualize/evidence).
 
 **Run the canvas**
 | action | request |

@@ -12,13 +12,50 @@ from __future__ import annotations
 import time
 from typing import Any, Literal, Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 NodeType = Literal["agent", "function", "input", "output"]
 NodeStatus = Literal["idle", "pending", "running", "complete", "error"]
 ContentType = Literal[
     "markdown", "html", "slides", "chart", "table", "image", "json", "text", "error"
 ]
+
+# A card's role in the research workflow (the semantic backbone):
+#   core_question  one per study — defines the question + boundary
+#   issue          an issue/hypothesis (issue tree), with a support status
+#   research       a (deep) research task that gathers evidence
+#   synthesis      distills connected research into a storyline (multi-version)
+#   output         the deliverable / visualization (deck)
+#   note           generic free node
+NodeRole = Literal["core_question", "issue", "research", "synthesis", "output", "note"]
+
+# How a card supports/challenges an issue's hypothesis (set from research).
+IssueStatus = Literal["untested", "supported", "challenged", "mixed"]
+
+# Typed meaning of an edge, by the roles it connects.
+EdgeRelation = Literal["decompose", "support", "distill", "visualize", "evidence", "relate"]
+
+# legacy category/type -> role, so existing graphs migrate automatically
+_CATEGORY_TO_ROLE = {
+    "research": "research",
+    "analysis": "synthesis",
+    "orchestrator": "synthesis",
+    "output": "output",
+    "general": "note",
+}
+_TYPE_TO_ROLE = {"input": "core_question", "output": "output"}
+
+_RELATION_BY_ROLES = {
+    ("core_question", "issue"): "decompose",
+    ("issue", "research"): "support",
+    ("research", "synthesis"): "distill",
+    ("synthesis", "output"): "visualize",
+    ("research", "issue"): "evidence",
+}
+
+
+def relation_for_roles(src_role: str, tgt_role: str) -> str:
+    return _RELATION_BY_ROLES.get((src_role, tgt_role), "relate")
 
 
 def _now() -> float:
@@ -63,21 +100,39 @@ class ResultVersion(BaseModel):
 
 class Node(BaseModel):
     id: str = Field(..., description="unique node id within the graph")
-    type: NodeType = "agent"
+    role: NodeRole = Field(
+        "note",
+        description="card role: core_question | issue | research | synthesis | output | note",
+    )
+    type: NodeType = "agent"  # legacy; role is the semantic field
     label: str = ""
-    # --- design-time config (set by Claude Code at design time) ---
-    instruction: str = Field("", description="the agent's brief / system instruction")
+    # --- design-time content (set at design time) ---
+    instruction: str = Field("", description="the card's brief / task")
+    fields: dict[str, Any] = Field(
+        default_factory=dict,
+        description=(
+            "role-specific structured content. "
+            "core_question: {basic_question, context, criteria_for_success, scope}; "
+            "issue: {issue, hypothesis, status}; research: {question}"
+        ),
+    )
     model: str = Field("", description="informational only; Claude Code is the executor")
     tools: list[str] = Field(default_factory=list)
-    category: str = Field(
-        "general",
-        description="general | router | orchestrator | research | analysis | output",
-    )
+    category: str = Field("general", description="legacy; superseded by role")
     config: dict[str, Any] = Field(default_factory=dict)
     # --- runtime state (written back at execution time) ---
     status: NodeStatus = "idle"
     versions: list[ResultVersion] = Field(default_factory=list)
     position: Position = Field(default_factory=Position)
+
+    @model_validator(mode="after")
+    def _derive_role(self) -> "Node":
+        # migrate legacy graphs: if role wasn't set, infer it from type/category
+        if self.role == "note":
+            inferred = _TYPE_TO_ROLE.get(self.type) or _CATEGORY_TO_ROLE.get(self.category)
+            if inferred:
+                self.role = inferred  # type: ignore[assignment]
+        return self
 
     def selected_version(self) -> Optional[ResultVersion]:
         for v in self.versions:
@@ -90,6 +145,10 @@ class Edge(BaseModel):
     id: str
     source: str = Field(..., description="source node id")
     target: str = Field(..., description="target node id")
+    relation: Optional[str] = Field(
+        default=None,
+        description="typed meaning: decompose | support | distill | visualize | evidence | relate",
+    )
     label: Optional[str] = None
     condition: Optional[str] = Field(
         default=None, description="optional human-readable routing condition"

@@ -2,17 +2,8 @@ import { Handle, Position } from "@xyflow/react";
 import { memo } from "react";
 import type { GraphNode } from "../api";
 import { bestVersion, ContentRenderer } from "../ContentRenderer";
+import { ISSUE_STATUS, roleMeta } from "../roles";
 import { useStore } from "../store";
-
-const CATEGORY_META: Record<string, { icon: string; tint: string }> = {
-  input: { icon: "📥", tint: "#64748b" },
-  output: { icon: "📤", tint: "#7c6cff" },
-  research: { icon: "🔬", tint: "#36c5f0" },
-  analysis: { icon: "📊", tint: "#2eb67d" },
-  router: { icon: "🔀", tint: "#ecb22e" },
-  orchestrator: { icon: "🎼", tint: "#e01e5a" },
-  general: { icon: "🤖", tint: "#9b8cff" },
-};
 
 const STATUS_META: Record<string, { label: string; cls: string }> = {
   idle: { label: "idle", cls: "idle" },
@@ -28,34 +19,64 @@ function LoomNodeInner({ data }: { data: { node: GraphNode } }) {
   const selectedNodeId = useStore((s) => s.selectedNodeId);
   const isEntry = useStore((s) => s.graph?.entry_point === node.id);
 
-  const meta = CATEGORY_META[node.type === "input" || node.type === "output" ? node.type : node.category] ??
-    CATEGORY_META.general;
+  const meta = roleMeta(node.role);
   const status = STATUS_META[node.status] ?? STATUS_META.idle;
   const version = bestVersion(node.versions);
   const isSelected = selectedNodeId === node.id;
+  const f = node.fields ?? {};
 
   return (
     <div
-      className={`loom-node ${isSelected ? "selected" : ""} status-${node.status}`}
+      className={`loom-node role-${node.role} ${isSelected ? "selected" : ""} status-${node.status}`}
       style={{ ["--tint" as string]: meta.tint }}
       onClick={() => selectNode(node.id)}
     >
       <Handle type="target" position={Position.Left} className="loom-handle" />
+
       <div className="loom-node-head">
         <span className="loom-node-icon">{meta.icon}</span>
-        <span className="loom-node-title" title={node.label}>
-          {node.label || node.id}
-        </span>
-        {isEntry && <span className="loom-entry-badge">entry</span>}
+        <span className="loom-role-tag">{meta.label}</span>
+        {isEntry && <span className="loom-entry-badge">root</span>}
         <span className={`loom-status ${status.cls}`}>
           {node.status === "running" && <span className="loom-spinner" />}
           {status.label}
         </span>
       </div>
 
-      {node.instruction && !version && (
-        <div className="loom-node-instruction">{node.instruction}</div>
+      <div className="loom-node-title" title={node.label}>
+        {node.label || node.id}
+      </div>
+
+      {/* role-specific body */}
+      {node.role === "core_question" && (
+        <div className="loom-cq">
+          {f.basic_question && <div className="loom-cq-q">{f.basic_question}</div>}
+          {f.scope && <div className="loom-cq-meta">Scope · {f.scope}</div>}
+        </div>
       )}
+
+      {node.role === "issue" && (
+        <div className="loom-issue">
+          {f.issue && <div className="loom-issue-text">{f.issue}</div>}
+          {f.hypothesis && (
+            <div className="loom-hypo">
+              <span className="loom-hypo-tag">H</span>
+              {f.hypothesis}
+            </div>
+          )}
+          {f.status && (
+            <span className={`loom-issue-status ${ISSUE_STATUS[f.status]?.cls ?? "untested"}`}>
+              {ISSUE_STATUS[f.status]?.label ?? f.status}
+            </span>
+          )}
+        </div>
+      )}
+
+      {(node.role === "research" || node.role === "note") &&
+        (node.instruction || f.question) &&
+        !version && (
+          <div className="loom-node-instruction">{f.question || node.instruction}</div>
+        )}
 
       {node.tools.length > 0 && (
         <div className="loom-tools">
@@ -80,10 +101,7 @@ function LoomNodeInner({ data }: { data: { node: GraphNode } }) {
       {node.versions.length > 1 && (
         <div className="loom-version-strip">
           {node.versions.map((v) => (
-            <span
-              key={v.version}
-              className={`loom-version-pill ${v.selected ? "on" : ""}`}
-            >
+            <span key={v.version} className={`loom-version-pill ${v.selected ? "on" : ""}`}>
               {v.version}
             </span>
           ))}

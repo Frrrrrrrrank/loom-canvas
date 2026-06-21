@@ -36,11 +36,21 @@ export interface ResultVersion {
   created_at: number;
 }
 
+export type NodeRole =
+  | "core_question"
+  | "issue"
+  | "research"
+  | "synthesis"
+  | "output"
+  | "note";
+
 export interface GraphNode {
   id: string;
+  role: NodeRole;
   type: NodeType;
   label: string;
   instruction: string;
+  fields: Record<string, any>;
   model: string;
   tools: string[];
   category: string;
@@ -54,6 +64,7 @@ export interface GraphEdge {
   id: string;
   source: string;
   target: string;
+  relation?: string | null;
   label?: string | null;
   condition?: string | null;
 }

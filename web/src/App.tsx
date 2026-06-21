@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { ReactFlowProvider } from "@xyflow/react";
 import { api, subscribe } from "./api";
+import { AddCard } from "./AddCard";
 import { Canvas } from "./Canvas";
 import { HistoryPanel } from "./HistoryPanel";
 import { Home } from "./Home";
@@ -37,12 +38,6 @@ export default function App() {
     await api.createCheckpoint(msg || "manual save");
   };
 
-  const addNode = async () => {
-    const id = `node_${Math.random().toString(36).slice(2, 7)}`;
-    await api.addNode({ id, label: "New node", type: "agent", category: "general" });
-    useStore.getState().selectNode(id);
-  };
-
   return (
     <div className="loom-app">
       <header className="loom-topbar">
@@ -75,9 +70,7 @@ export default function App() {
               >
                 ⟲ History
               </button>
-              <button className="loom-btn" onClick={addNode}>
-                + Node
-              </button>
+              <AddCard />
             </>
           )}
           <button
@@ -110,7 +103,7 @@ export default function App() {
                     <code>"用 Loom 搭一个昂跑台湾市场进入研究的画布"</code>
                   </p>
                   <p className="loom-onboard-dim">
-                    Or click <b>+ Node</b> to add one manually. Both stay in sync.
+                    Or click <b>+ Card</b> to add one manually (start with a Core Question).
                   </p>
                 </div>
               )}

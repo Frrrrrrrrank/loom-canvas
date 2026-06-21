@@ -72,16 +72,15 @@ def _summary(graph: dict[str, Any]) -> dict[str, Any]:
         "nodes": [
             {
                 "id": n["id"],
-                "type": n["type"],
+                "role": n.get("role"),
                 "label": n["label"],
-                "category": n.get("category"),
                 "status": n.get("status"),
                 "versions": [v["version"] for v in n.get("versions", [])],
             }
             for n in graph.get("nodes", [])
         ],
         "edges": [
-            {"source": e["source"], "target": e["target"], "label": e.get("label")}
+            {"source": e["source"], "target": e["target"], "relation": e.get("relation")}
             for e in graph.get("edges", [])
         ],
     }
@@ -159,29 +158,35 @@ def set_entry_point(node_id: str) -> dict[str, Any]:
 def add_node(
     node_id: str,
     label: str,
+    role: str = "research",
     instruction: str = "",
-    type: str = "agent",
-    category: str = "general",
+    fields: Optional[dict[str, Any]] = None,
     tools: Optional[list[str]] = None,
-    model: str = "",
     x: Optional[float] = None,
     y: Optional[float] = None,
 ) -> dict[str, Any]:
-    """Add a node to the canvas.
+    """Add a card to the canvas. Pick the role that matches its job in the study:
 
-    type: agent | function | input | output
-    category (for agents): general | router | orchestrator | research | analysis | output
-    instruction: the brief this agent will follow when executed.
-    tools: capability hints (e.g. ['web_search','social_listening']).
+    - core_question — ONE per study; the question + boundary. fields:
+        {"basic_question","context","criteria_for_success","scope"}
+    - issue — an issue/hypothesis in the issue tree. fields:
+        {"issue","hypothesis","status"} (status: untested|supported|challenged|mixed)
+    - research — a (deep) research task that gathers evidence. instruction = the
+        research question; fields optional, e.g. {"question":"..."}.
+    - synthesis — distills connected research into a storyline (multi-version).
+    - output — the deliverable / visualization (deck).
+    - note — generic free card.
+
+    Typical flow: core_question → issue(s) → research → synthesis → output, but it's
+    free-form (a study may start straight at research). tools: capability hints.
     x,y: optional canvas position; omit to auto-place."""
     body: dict[str, Any] = {
         "id": node_id,
+        "role": role,
         "label": label,
         "instruction": instruction,
-        "type": type,
-        "category": category,
+        "fields": fields or {},
         "tools": tools or [],
-        "model": model,
     }
     if x is not None and y is not None:
         body["position"] = {"x": x, "y": y}
@@ -203,10 +208,14 @@ def remove_node(node_id: str) -> dict[str, Any]:
 
 # ============== edges ==============
 @mcp.tool()
-def connect(source: str, target: str, label: Optional[str] = None, condition: Optional[str] = None) -> dict[str, Any]:
-    """Connect source node -> target node (data/control flow direction)."""
+def connect(source: str, target: str, relation: Optional[str] = None, label: Optional[str] = None) -> dict[str, Any]:
+    """Connect source card -> target card. The relation's meaning is auto-derived
+    from the two roles (core_question→issue = decompose, issue→research = support,
+    research→synthesis = distill, synthesis→output = visualize, research→issue =
+    evidence, else relate); pass `relation` only to override. Issue↔Research is
+    many-to-many — connect one issue to several research cards and vice versa."""
     return _after(
-        _call("POST", "/api/edges", json={"source": source, "target": target, "label": label, "condition": condition})
+        _call("POST", "/api/edges", json={"source": source, "target": target, "relation": relation, "label": label})
     )
 
 

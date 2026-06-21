@@ -28,8 +28,9 @@ the canvas over HTTP with **no restart**. The steps below assume Python ≥ 3.10
 The prebuilt canvas ships in `web/dist`, so Node is **not** required — only Python.
 
 ## Using Loom
-- **Design** the canvas: `get_graph`, then `add_node` / `connect`
-  (input brief → orchestrator/storyline → research nodes → analysis → output deck).
+- **Design** the canvas: `get_graph`, then `add_node` / `connect` using card
+  **roles**: core_question → issue(s) → research → synthesis → output (free-form;
+  issue↔research many-to-many; edges auto-label by role). Fill role `fields`.
 - **Run** it: `get_run_plan`, execute each node *as that node* with your real
   tools, write results via `set_node_result` choosing `content_type`
   (`markdown` / `chart` / `table` / `slides` / `image`).

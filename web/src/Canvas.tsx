@@ -17,6 +17,7 @@ import "@xyflow/react/dist/style.css";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { api } from "./api";
 import { LoomNode } from "./nodes/LoomNode";
+import { RELATION_LABEL } from "./roles";
 import { useStore } from "./store";
 
 const nodeTypes = { loom: LoomNode };
@@ -56,7 +57,10 @@ export function Canvas() {
         id: ge.id,
         source: ge.source,
         target: ge.target,
-        label: ge.label ?? undefined,
+        label: ge.label ?? RELATION_LABEL[ge.relation ?? "relate"] ?? undefined,
+        labelStyle: { fill: "var(--text-faint)", fontSize: 10 },
+        labelBgStyle: { fill: "var(--bg)", fillOpacity: 0.85 },
+        labelBgPadding: [4, 2] as [number, number],
         markerEnd: { type: MarkerType.ArrowClosed, color: "#8a8aa3" },
         style: { stroke: "#8a8aa3", strokeWidth: 1.5 },
         animated: false,
