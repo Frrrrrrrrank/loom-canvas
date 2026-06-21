@@ -21,6 +21,7 @@ export default function App() {
   const dirty = useStore((s) => s.dirty);
   const view = useStore((s) => s.view);
   const setView = useStore((s) => s.setView);
+  const agent = useStore((s) => s.agent);
 
   useEffect(() => {
     const unsub = subscribe(applyEvent, setConnected);
@@ -68,12 +69,30 @@ export default function App() {
                 return pending > 0 ? (
                   <span
                     className="loom-inbox"
-                    title='在 Claude Code 里说"处理画布留言",它会处理这些卡片留言并回复'
+                    title={
+                      agent?.enabled
+                        ? "自动回复已开启:卡片留言会自动处理"
+                        : '在 Claude Code 里说"处理画布留言",它会处理这些卡片留言并回复'
+                    }
                   >
                     💬 {pending}
                   </span>
                 ) : null;
               })()}
+              {agent?.available && (
+                <button
+                  className={`loom-btn ghost loom-auto ${agent.enabled ? "on" : ""}`}
+                  onClick={() => api.setAgent(!agent.enabled)}
+                  title={
+                    agent.enabled
+                      ? `自动回复已开启 (${agent.kind})${agent.last_error ? " · 上次出错:" + agent.last_error : ""}`
+                      : `点开启:卡片留言由 ${agent.kind} 自动实时处理`
+                  }
+                >
+                  {agent.running ? <span className="loom-spinner" /> : "🤖"}
+                  {agent.running ? " responding…" : agent.enabled ? " Auto on" : " Auto off"}
+                </button>
+              )}
               <button className="loom-btn ghost" onClick={saveVersion} title="Save a version">
                 {dirty ? "● Save" : "Save"}
               </button>

@@ -1,5 +1,13 @@
 import { create } from "zustand";
-import { api, type Checkpoint, type Graph, type GraphNode, type Project, type SseEvent } from "./api";
+import {
+  api,
+  type AgentStatus,
+  type Checkpoint,
+  type Graph,
+  type GraphNode,
+  type Project,
+  type SseEvent,
+} from "./api";
 
 export type Theme = "dark" | "light";
 export type View = "home" | "canvas";
@@ -22,6 +30,7 @@ interface LoomState {
   headId: string | null;
   dirty: boolean;
   historyOpen: boolean;
+  agent: AgentStatus | null;
   // nodes the user is mid-drag on; we ignore server position echoes for these
   dragging: Set<string>;
 
@@ -52,6 +61,7 @@ export const useStore = create<LoomState>((set, get) => ({
   headId: null,
   dirty: false,
   historyOpen: false,
+  agent: null,
   dragging: new Set(),
 
   applyEvent: (e) => {
@@ -74,6 +84,9 @@ export const useStore = create<LoomState>((set, get) => ({
       });
     } else if (e.type === "workspace") {
       void get().refreshWorkspace();
+    } else if (e.type === "agent") {
+      const { type: _t, ...status } = e;
+      set({ agent: status });
     }
   },
 
@@ -81,15 +94,17 @@ export const useStore = create<LoomState>((set, get) => ({
   setHistoryOpen: (historyOpen) => set({ historyOpen }),
   refreshWorkspace: async () => {
     try {
-      const [projects, history] = await Promise.all([
+      const [projects, history, agent] = await Promise.all([
         api.listProjects(),
         api.getHistory(),
+        api.getAgent(),
       ]);
       set({
         projects,
         checkpoints: history.checkpoints,
         headId: history.head_id,
         dirty: history.dirty,
+        agent,
       });
     } catch {
       /* server not up yet */

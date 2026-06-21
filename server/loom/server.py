@@ -21,6 +21,7 @@ from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
+from .agent import AgentRunner
 from .models import Node
 from .state import Store
 
@@ -31,6 +32,8 @@ ARTIFACT_DIR.mkdir(parents=True, exist_ok=True)
 WEB_DIST = Path(__file__).resolve().parent.parent.parent / "web" / "dist"
 
 store = Store(DATA_DIR)
+agent = AgentRunner(store, store.bus.publish)
+store.on_user_message = agent.notify  # new card message -> auto-respond (if enabled)
 
 app = FastAPI(title="Loom", version="0.1.0")
 app.add_middleware(
@@ -382,6 +385,21 @@ def mark_processed(node_id: str) -> dict[str, Any]:
 @app.get("/api/inbox")
 def get_inbox() -> list[dict[str, Any]]:
     return store.inbox()
+
+
+# ================= API: auto-responder =================
+class AgentToggle(BaseModel):
+    enabled: bool
+
+
+@app.get("/api/agent")
+def agent_status() -> dict[str, Any]:
+    return agent.status()
+
+
+@app.post("/api/agent")
+def agent_toggle(body: AgentToggle) -> dict[str, Any]:
+    return agent.set_enabled(body.enabled)
 
 
 # ================= API: edges =================

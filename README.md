@@ -118,3 +118,11 @@ restart (the first run is driven over local HTTP).
 - `LOOM_DATA_DIR` — where projects + `artifacts/` live (default `~/.loom`).
 - `LOOM_SERVER_URL` — used by the MCP bridge to reach the server.
 - `LOOM_AUTOSAVE_IDLE` / `LOOM_AUTOSAVE_MAX` — idle-autosave seconds / version cap.
+- `LOOM_AGENT` — auto-responder: `auto` (default, detect `claude`/`codex`) | `claude`
+  | `codex` | `off`. When on (toggle 🤖 Auto in the topbar), a card message makes
+  the server invoke your agent headlessly (`claude -p` / `codex exec`, your own
+  subscription, no API key) to handle it and reply in the card — real-time, no
+  "处理画布留言" needed. `LOOM_AGENT_CMD` overrides the command (`{prompt}`
+  placeholder) if the default headless flags don't fit your CLI version;
+  `LOOM_AGENT_DEBOUNCE` / `LOOM_AGENT_TIMEOUT` tune batching / max run time. On
+  failure it falls back to the manual inbox.

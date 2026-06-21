@@ -109,6 +109,8 @@ class Store:
         self._autosave_idle = float(os.environ.get("LOOM_AUTOSAVE_IDLE", "60"))
         self._autosave_max = int(os.environ.get("LOOM_AUTOSAVE_MAX", "40"))
         self._autosave_timer: Optional[threading.Timer] = None
+        # optional hook fired when a user message lands on a card (the auto-responder)
+        self.on_user_message: Optional[Any] = None
         self._bootstrap()
 
     # ============== paths ==============
@@ -628,6 +630,11 @@ class Store:
         )
         node.thread.append(msg)
         self._emit()
+        if role == "user" and self.on_user_message:
+            try:
+                self.on_user_message()
+            except Exception:
+                pass
         return node
 
     @_synchronized

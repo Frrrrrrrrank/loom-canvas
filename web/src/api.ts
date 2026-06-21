@@ -189,6 +189,14 @@ export const api = {
       body: JSON.stringify({ text }),
     }),
 
+  getAgent: () => fetch("/api/agent").then((r) => j<AgentStatus>(r)),
+  setAgent: (enabled: boolean) =>
+    fetch("/api/agent", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ enabled }),
+    }).then((r) => j<AgentStatus>(r)),
+
   addEdge: (source: string, target: string) =>
     fetch("/api/edges", {
       method: "POST",
@@ -213,10 +221,19 @@ export const api = {
     }),
 };
 
+export interface AgentStatus {
+  available: boolean;
+  kind: string | null;
+  enabled: boolean;
+  running: boolean;
+  last_error?: string | null;
+}
+
 export type SseEvent =
   | { type: "graph"; graph: Graph }
   | { type: "node_moved"; id: string; position: { x: number; y: number } }
-  | { type: "workspace" };
+  | { type: "workspace" }
+  | ({ type: "agent" } & AgentStatus);
 
 export function subscribe(
   onEvent: (e: SseEvent) => void,

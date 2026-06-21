@@ -124,8 +124,10 @@ proactively at the start of a turn if you suspect there are notes):
    card's inbox). If the discussion changed the card's deliverable, ALSO
    `set_node_result` to update it (and add a new `version` if it's an alternative).
 
-This is manual/triggered by design (robust, no idle token cost). If the user wants
-it live, they can ask you to "watch the canvas" — then poll `get_inbox` on a loop.
+If the server's auto-responder is on (the 🤖 Auto toggle), the server invokes you
+headlessly the moment a card message arrives, with the same instruction — so you
+just drain the inbox as above; no user trigger needed. With it off, the user nudges
+you ("处理画布留言"). Either way the inbox flow is identical.
 
 ## Projects & version history
 Each canvas is a **project** with its own history. Use these so the user's work

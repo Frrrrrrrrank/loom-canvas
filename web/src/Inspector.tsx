@@ -212,8 +212,10 @@ function InspectorBody({
 
 function CardChat({ node }: { node: GraphNode }) {
   const [text, setText] = useState("");
+  const agent = useStore((s) => s.agent);
   const thread = node.thread ?? [];
   const pending = thread.filter((m) => m.role === "user" && !m.processed).length;
+  const auto = !!agent?.enabled;
 
   const send = async () => {
     const t = text.trim();
@@ -255,7 +257,11 @@ function CardChat({ node }: { node: GraphNode }) {
       </div>
       {pending > 0 && (
         <div className="loom-chat-hint">
-          Sent. In Claude Code say <b>"处理画布留言"</b> and it'll act on this card &amp; reply here.
+          {agent?.running
+            ? "Claude Code is responding…"
+            : auto
+              ? `Sent — ${agent?.kind} will auto-respond here shortly.`
+              : 'Sent. In Claude Code say "处理画布留言" and it\'ll act on this card & reply here.'}
         </div>
       )}
     </div>
