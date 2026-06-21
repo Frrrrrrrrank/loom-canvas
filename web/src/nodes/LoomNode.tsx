@@ -18,6 +18,7 @@ function LoomNodeInner({ data }: { data: { node: GraphNode } }) {
   const selectNode = useStore((s) => s.selectNode);
   const selectedNodeId = useStore((s) => s.selectedNodeId);
   const isEntry = useStore((s) => s.graph?.entry_point === node.id);
+  const isEnd = useStore((s) => s.graph?.end_point === node.id);
 
   const meta = roleMeta(node.role);
   const status = STATUS_META[node.status] ?? STATUS_META.idle;
@@ -37,6 +38,7 @@ function LoomNodeInner({ data }: { data: { node: GraphNode } }) {
         <span className="loom-node-icon">{meta.icon}</span>
         <span className="loom-role-tag">{meta.label}</span>
         {isEntry && <span className="loom-entry-badge">root</span>}
+        {isEnd && <span className="loom-entry-badge end">end</span>}
         {(() => {
           const pending = (node.thread ?? []).filter(
             (m) => m.role === "user" && !m.processed,

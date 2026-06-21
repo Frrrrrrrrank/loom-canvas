@@ -520,13 +520,23 @@ class Store:
         ]
         if self.graph.entry_point == node_id:
             self.graph.entry_point = self.graph.nodes[0].id if self.graph.nodes else None
+        if self.graph.end_point == node_id:
+            self.graph.end_point = None
         self._emit()
 
     @_synchronized
-    def set_entry_point(self, node_id: str) -> Graph:
-        if not self.graph.node(node_id):
+    def set_entry_point(self, node_id: Optional[str]) -> Graph:
+        if node_id and not self.graph.node(node_id):
             raise KeyError(node_id)
         self.graph.entry_point = node_id
+        self._emit()
+        return self.graph
+
+    @_synchronized
+    def set_end_point(self, node_id: Optional[str]) -> Graph:
+        if node_id and not self.graph.node(node_id):
+            raise KeyError(node_id)
+        self.graph.end_point = node_id
         self._emit()
         return self.graph
 

@@ -128,11 +128,20 @@ def get_run_plan() -> dict[str, Any]:
     """
     g = store.graph
     order = g.topo_order()
+    # scope the run to root..end (set root / set end). Defaults: root = entry_point
+    # (or all), end = none (all downstream). Lets you re-run just one branch.
+    all_ids = {n.id for n in g.nodes}
+    root = g.entry_point if (g.entry_point and g.node(g.entry_point)) else None
+    end = g.end_point if (g.end_point and g.node(g.end_point)) else None
+    reach = (g.descendants(root) | {root}) if root else set(all_ids)
+    scope = (reach & (g.ancestors(end) | {end})) if end else reach
     steps = []
     for nid in order:
         node = g.node(nid)
         # core_question / issue are framing (not executed); research/synthesis/output run
         if not node or node.role not in ("research", "synthesis", "output"):
+            continue
+        if nid not in scope:
             continue
         upstream = g.upstream(nid)
         upstream_results = []
@@ -185,13 +194,17 @@ def get_run_plan() -> dict[str, Any]:
         "name": g.name,
         "description": g.description,
         "entry_point": g.entry_point,
+        "root": root,
+        "end": end,
+        "scoped": bool(root) or bool(end),
         "order": order,
         "steps": steps,
         "levels": levels,
         "parallel_hint": (
             "Each inner list in 'levels' is a set of nodes with no dependency on "
             "each other — run them concurrently (one parallel subagent per node), "
-            "not one at a time. Levels themselves run in sequence."
+            "not one at a time. Levels themselves run in sequence. 'steps' is already "
+            "scoped to root..end — only re-run these."
         ),
     }
 
@@ -273,6 +286,24 @@ def set_entry(node_id: str) -> dict[str, Any]:
         return store.set_entry_point(node_id).model_dump()
     except KeyError:
         raise HTTPException(404, f"node '{node_id}' not found")
+
+
+@app.delete("/api/graph/entry")
+def clear_entry() -> dict[str, Any]:
+    return store.set_entry_point(None).model_dump()
+
+
+@app.post("/api/graph/end/{node_id}")
+def set_end(node_id: str) -> dict[str, Any]:
+    try:
+        return store.set_end_point(node_id).model_dump()
+    except KeyError:
+        raise HTTPException(404, f"node '{node_id}' not found")
+
+
+@app.delete("/api/graph/end")
+def clear_end() -> dict[str, Any]:
+    return store.set_end_point(None).model_dump()
 
 
 # ================= API: nodes =================

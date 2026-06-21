@@ -114,6 +114,7 @@ function InspectorBody({
 
       <div className="loom-insp-meta">
         <span className={`loom-status ${node.status}`}>{node.status}</span>
+        <RootEndButtons node={node} />
         <button className="loom-btn tiny" onClick={() => (editing ? save() : setEditing(true))}>
           {editing ? "save" : "edit"}
         </button>
@@ -237,6 +238,29 @@ function InspectorBody({
         </div>
       )}
     </div>
+  );
+}
+
+function RootEndButtons({ node }: { node: GraphNode }) {
+  const isRoot = useStore((s) => s.graph?.entry_point === node.id);
+  const isEnd = useStore((s) => s.graph?.end_point === node.id);
+  return (
+    <>
+      <button
+        className={`loom-btn tiny ${isRoot ? "accent" : ""}`}
+        title="运行起点：从这里开始跑（默认 Core Question）"
+        onClick={() => (isRoot ? api.clearEntry() : api.setEntry(node.id))}
+      >
+        {isRoot ? "✓ root" : "set root"}
+      </button>
+      <button
+        className={`loom-btn tiny ${isEnd ? "accent" : ""}`}
+        title="运行终点：跑到这里为止。配合 root 圈出一段支线单独重跑（默认全图）"
+        onClick={() => (isEnd ? api.clearEnd() : api.setEnd(node.id))}
+      >
+        {isEnd ? "✓ end" : "set end"}
+      </button>
+    </>
   );
 }
 

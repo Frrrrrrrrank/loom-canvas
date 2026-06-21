@@ -63,7 +63,9 @@ The user may also drag/edit on the canvas; re-`get_graph` to resync before big e
 When the user says "运行 / run / 执行画布":
 1. `get_run_plan` → it returns `steps` (each node's instruction, tools, ready
    upstream results) **and `levels`** — a list of node-id groups where every node
-   in a group has no dependency on the others.
+   in a group has no dependency on the others. `steps` is already **scoped to
+   root..end**: if the user set a run root/end (to re-run just one branch), only
+   those nodes are returned — run exactly those, don't run the rest.
 2. **Run level by level. Within a level, run the nodes IN PARALLEL — do not do
    them one at a time.** Concretely, for each level:
    - First `set_node_status(id, "running")` for every node in the level so they

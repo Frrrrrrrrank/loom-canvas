@@ -224,7 +224,8 @@ class Graph(BaseModel):
     description: str = ""
     nodes: list[Node] = Field(default_factory=list)
     edges: list[Edge] = Field(default_factory=list)
-    entry_point: Optional[str] = None
+    entry_point: Optional[str] = Field(default=None, description="run start (root)")
+    end_point: Optional[str] = Field(default=None, description="run end (terminal); scopes a run")
     updated_at: float = Field(default_factory=_now)
 
     # ---- convenience lookups ----
@@ -236,6 +237,28 @@ class Graph(BaseModel):
 
     def downstream(self, node_id: str) -> list[str]:
         return [e.target for e in self.edges if e.source == node_id]
+
+    def descendants(self, start: str) -> set[str]:
+        seen: set[str] = set()
+        stack = [start]
+        while stack:
+            cur = stack.pop()
+            for e in self.edges:
+                if e.source == cur and e.target not in seen:
+                    seen.add(e.target)
+                    stack.append(e.target)
+        return seen
+
+    def ancestors(self, end: str) -> set[str]:
+        seen: set[str] = set()
+        stack = [end]
+        while stack:
+            cur = stack.pop()
+            for e in self.edges:
+                if e.target == cur and e.source not in seen:
+                    seen.add(e.source)
+                    stack.append(e.source)
+        return seen
 
     def topo_order(self) -> list[str]:
         """Kahn topological sort; falls back to insertion order on a cycle."""

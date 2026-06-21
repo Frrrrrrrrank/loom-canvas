@@ -111,6 +111,7 @@ export interface Graph {
   nodes: GraphNode[];
   edges: GraphEdge[];
   entry_point: string | null;
+  end_point?: string | null;
   updated_at: number;
 }
 
@@ -249,6 +250,10 @@ export const api = {
 
   setEntry: (id: string) =>
     fetch(`/api/graph/entry/${encodeURIComponent(id)}`, { method: "POST" }),
+  clearEntry: () => fetch("/api/graph/entry", { method: "DELETE" }),
+  setEnd: (id: string) =>
+    fetch(`/api/graph/end/${encodeURIComponent(id)}`, { method: "POST" }),
+  clearEnd: () => fetch("/api/graph/end", { method: "DELETE" }),
 
   setMeta: (name?: string, description?: string) =>
     fetch("/api/graph", {

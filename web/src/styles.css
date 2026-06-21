@@ -233,6 +233,9 @@ body {
   border-radius: 5px;
   letter-spacing: 0.5px;
 }
+.loom-entry-badge.end {
+  background: var(--red);
+}
 .loom-status {
   font-size: 10px;
   padding: 2px 7px;
