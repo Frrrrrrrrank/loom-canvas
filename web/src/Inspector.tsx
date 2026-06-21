@@ -1,25 +1,55 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { api, type GraphNode } from "./api";
 import { ContentRenderer } from "./ContentRenderer";
 import { ResearchReader } from "./ResearchReader";
 import { ISSUE_STATUS, ROLE_FIELDS, ROLE_ORDER, roleMeta } from "./roles";
 import { useStore } from "./store";
 
+// Card details = right side panel, resizable by dragging its left edge.
 export function Inspector() {
   const selectedNodeId = useStore((s) => s.selectedNodeId);
   const node = useStore((s) => s.graph?.nodes.find((n) => n.id === selectedNodeId));
   const selectNode = useStore((s) => s.selectNode);
   const setFullscreen = useStore((s) => s.setFullscreen);
 
+  const [width, setWidth] = useState<number>(
+    () => Number(localStorage.getItem("loom-insp-w")) || 440,
+  );
+  const wRef = useRef(width);
+  wRef.current = width;
+
+  const startResize = (e: React.MouseEvent) => {
+    e.preventDefault();
+    const startX = e.clientX;
+    const startW = wRef.current;
+    const onMove = (ev: MouseEvent) => {
+      const w = Math.min(
+        window.innerWidth * 0.7,
+        Math.max(340, startW + (startX - ev.clientX)),
+      );
+      setWidth(w);
+    };
+    const onUp = () => {
+      localStorage.setItem("loom-insp-w", String(wRef.current));
+      document.removeEventListener("mousemove", onMove);
+      document.removeEventListener("mouseup", onUp);
+    };
+    document.addEventListener("mousemove", onMove);
+    document.addEventListener("mouseup", onUp);
+  };
+
   if (!node) return null;
   return (
-    <aside className="loom-inspector">
-      <InspectorBody
-        key={node.id}
-        node={node}
-        onClose={() => selectNode(null)}
-        onFullscreen={() => setFullscreen(node.id)}
-      />
+    <aside className="loom-inspector" style={{ width }}>
+      <div className="loom-inspector-resize" onMouseDown={startResize} title="Drag to resize" />
+      <div className="loom-inspector-inner">
+        <InspectorBody
+          key={node.id}
+          node={node}
+          onClose={() => selectNode(null)}
+          onFullscreen={() => setFullscreen(node.id)}
+        />
+      </div>
     </aside>
   );
 }
@@ -75,9 +105,9 @@ function InspectorBody({
           )}
         </div>
         <div className="loom-insp-actions">
-          {(node.versions.length > 0 || (node.role === "research" && node.research)) && (
-            <button className="loom-btn ghost" onClick={onFullscreen} title="Fullscreen">⛶</button>
-          )}
+          <button className="loom-btn loom-fs-btn" onClick={onFullscreen} title="Expand to full screen">
+            ⛶ 全屏
+          </button>
           <button className="loom-btn ghost" onClick={onClose} title="Close">✕</button>
         </div>
       </header>
@@ -207,66 +237,6 @@ function InspectorBody({
               <span className="loom-artifact-type">{a.type}</span>
             </a>
           ))}
-        </div>
-      )}
-
-      <CardChat node={node} />
-    </div>
-  );
-}
-
-function CardChat({ node }: { node: GraphNode }) {
-  const [text, setText] = useState("");
-  const agent = useStore((s) => s.agent);
-  const thread = node.thread ?? [];
-  const pending = thread.filter((m) => m.role === "user" && !m.processed).length;
-  const auto = !!agent?.enabled;
-
-  const send = async () => {
-    const t = text.trim();
-    if (!t) return;
-    setText("");
-    await api.sendCardMessage(node.id, t);
-  };
-
-  return (
-    <div className="loom-chat">
-      <div className="loom-chat-title">
-        Discuss this card
-        {pending > 0 && <span className="loom-chat-pending">{pending} pending</span>}
-      </div>
-      {thread.length > 0 && (
-        <div className="loom-chat-thread">
-          {thread.map((m) => (
-            <div key={m.id} className={`loom-msg ${m.role}`}>
-              <div className="loom-msg-who">{m.role === "user" ? "you" : "Claude Code"}</div>
-              <div className="loom-msg-text">{m.text}</div>
-            </div>
-          ))}
-        </div>
-      )}
-      <div className="loom-chat-input">
-        <textarea
-          className="loom-input"
-          rows={2}
-          placeholder="e.g. 再去多查一下 momo 的抽成；或:这个点和我认知不符,聊聊"
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) send();
-          }}
-        />
-        <button className="loom-btn accent" onClick={send} disabled={!text.trim()}>
-          Send
-        </button>
-      </div>
-      {pending > 0 && (
-        <div className="loom-chat-hint">
-          {agent?.running
-            ? "Claude Code is responding…"
-            : auto
-              ? `Sent — ${agent?.kind} will auto-respond here shortly.`
-              : 'Sent. In Claude Code say "处理画布留言" and it\'ll act on this card & reply here.'}
         </div>
       )}
     </div>

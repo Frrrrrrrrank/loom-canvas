@@ -743,16 +743,113 @@ body {
   line-height: 1.5;
 }
 
-/* ---------- inspector ---------- */
+/* ---------- inspector (right side panel, resizable) ---------- */
 .loom-inspector {
-  width: 420px;
   border-left: 1px solid var(--line);
   background: var(--bg-2);
   overflow-y: auto;
   flex-shrink: 0;
+  position: relative;
+}
+.loom-inspector-resize {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 6px;
+  cursor: ew-resize;
+  z-index: 2;
+}
+.loom-inspector-resize:hover {
+  background: var(--accent);
 }
 .loom-inspector-inner {
   padding: 16px;
+}
+.loom-fs-btn {
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* ---------- floating card composer (bottom-center) ---------- */
+.loom-composer {
+  position: absolute;
+  left: 50%;
+  bottom: 22px;
+  transform: translateX(-50%);
+  width: min(640px, 88%);
+  z-index: 9;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  pointer-events: none;
+}
+.loom-composer > * {
+  pointer-events: auto;
+}
+.loom-composer-thread {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 10px;
+  max-height: 230px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  box-shadow: var(--shadow);
+}
+.loom-composer-box {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  background: var(--panel);
+  border: 1px solid var(--line-2);
+  border-radius: 14px;
+  padding: 9px 10px 9px 12px;
+  box-shadow: var(--shadow);
+}
+.loom-composer-tag {
+  font-size: 11px;
+  color: var(--text-dim);
+  white-space: nowrap;
+  max-width: 160px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  align-self: center;
+}
+.loom-composer-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: var(--text);
+  font: inherit;
+  font-size: 13px;
+  line-height: 1.5;
+  resize: none;
+  outline: none;
+  max-height: 120px;
+  min-height: 22px;
+}
+.loom-composer-send {
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  flex-shrink: 0;
+  font-size: 15px;
+}
+.loom-composer-send:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+.loom-composer-hint {
+  font-size: 11px;
+  color: var(--text-faint);
+  text-align: center;
 }
 .loom-insp-head {
   display: flex;

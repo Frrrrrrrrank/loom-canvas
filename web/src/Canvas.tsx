@@ -17,7 +17,7 @@ import "@xyflow/react/dist/style.css";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { api } from "./api";
 import { LoomNode } from "./nodes/LoomNode";
-import { RELATION_LABEL } from "./roles";
+import { RELATION_LABEL, relationForRoles } from "./roles";
 import { useStore } from "./store";
 
 const nodeTypes = { loom: LoomNode };
@@ -52,19 +52,27 @@ export function Canvas() {
         } as Node;
       });
     });
+    const roleById = new Map(graph.nodes.map((n) => [n.id, n.role]));
     setEdges(
-      graph.edges.map((ge) => ({
-        id: ge.id,
-        source: ge.source,
-        target: ge.target,
-        label: ge.label ?? RELATION_LABEL[ge.relation ?? "relate"] ?? undefined,
-        labelStyle: { fill: "var(--text-faint)", fontSize: 10 },
-        labelBgStyle: { fill: "var(--bg)", fillOpacity: 0.85 },
-        labelBgPadding: [4, 2] as [number, number],
-        markerEnd: { type: MarkerType.ArrowClosed, color: "#8a8aa3" },
-        style: { stroke: "#8a8aa3", strokeWidth: 1.5 },
-        animated: false,
-      })),
+      graph.edges.map((ge) => {
+        // backfill the relation from the two roles if the edge predates the feature
+        const rel =
+          ge.relation || relationForRoles(roleById.get(ge.source), roleById.get(ge.target));
+        return {
+          id: ge.id,
+          source: ge.source,
+          target: ge.target,
+          label: ge.label ?? RELATION_LABEL[rel] ?? undefined,
+          labelStyle: { fill: "var(--text-dim)", fontSize: 11, fontWeight: 600 },
+          labelShowBg: true,
+          labelBgStyle: { fill: "var(--bg)", fillOpacity: 0.9 },
+          labelBgPadding: [5, 3] as [number, number],
+          labelBgBorderRadius: 5,
+          markerEnd: { type: MarkerType.ArrowClosed, color: "#8a8aa3" },
+          style: { stroke: "#8a8aa3", strokeWidth: 1.5 },
+          animated: false,
+        };
+      }),
     );
   }, [graph]);
 

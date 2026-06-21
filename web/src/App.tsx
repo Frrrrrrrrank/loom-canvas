@@ -3,6 +3,7 @@ import { ReactFlowProvider } from "@xyflow/react";
 import { api, subscribe } from "./api";
 import { AddCard } from "./AddCard";
 import { Canvas } from "./Canvas";
+import { CardComposer } from "./CardComposer";
 import { HistoryPanel } from "./HistoryPanel";
 import { Home } from "./Home";
 import { FullscreenModal, Inspector } from "./Inspector";
@@ -140,6 +141,7 @@ export default function App() {
                   </p>
                 </div>
               )}
+              <CardComposer />
             </div>
           </ReactFlowProvider>
           <Inspector />

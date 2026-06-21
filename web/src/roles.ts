@@ -64,6 +64,20 @@ export const RELATION_LABEL: Record<string, string> = {
   relate: "",
 };
 
+// client-side mirror of the server's role→relation map, so we can backfill a
+// label on older edges whose relation was never set (built before the feature).
+const RELATION_BY_ROLES: Record<string, string> = {
+  "core_question>issue": "decompose",
+  "issue>research": "support",
+  "research>synthesis": "distill",
+  "synthesis>output": "visualize",
+  "research>issue": "evidence",
+};
+
+export function relationForRoles(srcRole?: string, tgtRole?: string): string {
+  return RELATION_BY_ROLES[`${srcRole}>${tgtRole}`] ?? "relate";
+}
+
 // the per-role structured fields shown/edited on a card
 export const ROLE_FIELDS: Partial<Record<NodeRole, { key: string; label: string; long?: boolean }[]>> = {
   core_question: [
