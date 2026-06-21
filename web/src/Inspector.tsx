@@ -204,6 +204,60 @@ function InspectorBody({
           ))}
         </div>
       )}
+
+      <CardChat node={node} />
+    </div>
+  );
+}
+
+function CardChat({ node }: { node: GraphNode }) {
+  const [text, setText] = useState("");
+  const thread = node.thread ?? [];
+  const pending = thread.filter((m) => m.role === "user" && !m.processed).length;
+
+  const send = async () => {
+    const t = text.trim();
+    if (!t) return;
+    setText("");
+    await api.sendCardMessage(node.id, t);
+  };
+
+  return (
+    <div className="loom-chat">
+      <div className="loom-chat-title">
+        Discuss this card
+        {pending > 0 && <span className="loom-chat-pending">{pending} pending</span>}
+      </div>
+      {thread.length > 0 && (
+        <div className="loom-chat-thread">
+          {thread.map((m) => (
+            <div key={m.id} className={`loom-msg ${m.role}`}>
+              <div className="loom-msg-who">{m.role === "user" ? "you" : "Claude Code"}</div>
+              <div className="loom-msg-text">{m.text}</div>
+            </div>
+          ))}
+        </div>
+      )}
+      <div className="loom-chat-input">
+        <textarea
+          className="loom-input"
+          rows={2}
+          placeholder="e.g. 再去多查一下 momo 的抽成；或:这个点和我认知不符,聊聊"
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) send();
+          }}
+        />
+        <button className="loom-btn accent" onClick={send} disabled={!text.trim()}>
+          Send
+        </button>
+      </div>
+      {pending > 0 && (
+        <div className="loom-chat-hint">
+          Sent. In Claude Code say <b>"处理画布留言"</b> and it'll act on this card &amp; reply here.
+        </div>
+      )}
     </div>
   );
 }

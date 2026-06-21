@@ -60,6 +60,20 @@ export default function App() {
         <div className="loom-topbar-right">
           {view === "canvas" && (
             <>
+              {(() => {
+                const pending = (graph?.nodes ?? []).reduce(
+                  (a, n) => a + (n.thread ?? []).filter((m) => m.role === "user" && !m.processed).length,
+                  0,
+                );
+                return pending > 0 ? (
+                  <span
+                    className="loom-inbox"
+                    title='在 Claude Code 里说"处理画布留言",它会处理这些卡片留言并回复'
+                  >
+                    💬 {pending}
+                  </span>
+                ) : null;
+              })()}
               <button className="loom-btn ghost" onClick={saveVersion} title="Save a version">
                 {dirty ? "● Save" : "Save"}
               </button>

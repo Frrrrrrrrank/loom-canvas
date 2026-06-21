@@ -37,6 +37,16 @@ function LoomNodeInner({ data }: { data: { node: GraphNode } }) {
         <span className="loom-node-icon">{meta.icon}</span>
         <span className="loom-role-tag">{meta.label}</span>
         {isEntry && <span className="loom-entry-badge">root</span>}
+        {(() => {
+          const pending = (node.thread ?? []).filter(
+            (m) => m.role === "user" && !m.processed,
+          ).length;
+          return pending > 0 ? (
+            <span className="loom-msg-badge" title={`${pending} pending message(s)`}>
+              💬 {pending}
+            </span>
+          ) : null;
+        })()}
         <span className={`loom-status ${status.cls}`}>
           {node.status === "running" && <span className="loom-spinner" />}
           {status.label}

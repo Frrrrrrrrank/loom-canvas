@@ -98,6 +98,20 @@ class ResultVersion(BaseModel):
     created_at: float = Field(default_factory=_now)
 
 
+class CardMessage(BaseModel):
+    """One turn in a card's chat thread.
+
+    role 'user' = a human note typed on the canvas (LibTV-style in-card chat);
+    role 'assistant' = Claude Code's reply. Unprocessed user messages form the
+    inbox the model drains when the user says '处理画布留言'."""
+
+    id: str
+    role: Literal["user", "assistant"]
+    text: str
+    created_at: float = Field(default_factory=_now)
+    processed: bool = Field(default=False, description="for user msgs: has CC handled it")
+
+
 class Node(BaseModel):
     id: str = Field(..., description="unique node id within the graph")
     role: NodeRole = Field(
@@ -123,7 +137,11 @@ class Node(BaseModel):
     # --- runtime state (written back at execution time) ---
     status: NodeStatus = "idle"
     versions: list[ResultVersion] = Field(default_factory=list)
+    thread: list[CardMessage] = Field(default_factory=list)
     position: Position = Field(default_factory=Position)
+
+    def unprocessed(self) -> int:
+        return sum(1 for m in self.thread if m.role == "user" and not m.processed)
 
     @model_validator(mode="after")
     def _derive_role(self) -> "Node":

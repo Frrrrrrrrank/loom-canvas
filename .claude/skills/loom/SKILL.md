@@ -108,6 +108,25 @@ Every result should carry its evidence chain in `sources`:
   {"type":"node","ref":"social"}]`. Use `type:"node"` to point a synthesis back
 to the upstream research it drew from. This is what makes a conclusion auditable.
 
+## In-card discussion (the inbox)
+The user can chat with a card right on the canvas — "go collect more on momo's
+commission", or "this point contradicts my read, let's debate it". These notes
+queue server-side as an **inbox**.
+
+When the user says "处理画布留言 / 看看卡片讨论 / process the canvas messages" (or
+proactively at the start of a turn if you suspect there are notes):
+1. `get_inbox` → cards with unprocessed user messages.
+2. For each, `get_card_thread(id)` → read the discussion + the card's current result.
+3. Do the work the note asks for (more research, a revision, or a genuine
+   back-and-forth if they're challenging a point — push back with evidence, don't
+   just comply).
+4. `reply_to_card(id, text)` with your conversational answer (this also clears the
+   card's inbox). If the discussion changed the card's deliverable, ALSO
+   `set_node_result` to update it (and add a new `version` if it's an alternative).
+
+This is manual/triggered by design (robust, no idle token cost). If the user wants
+it live, they can ask you to "watch the canvas" — then poll `get_inbox` on a loop.
+
 ## Projects & version history
 Each canvas is a **project** with its own history. Use these so the user's work
 is organized and recoverable:

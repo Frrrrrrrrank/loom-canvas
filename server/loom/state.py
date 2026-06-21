@@ -29,6 +29,7 @@ from typing import Any, Optional
 
 from .models import (
     Artifact,
+    CardMessage,
     Checkpoint,
     Edge,
     Graph,
@@ -612,6 +613,66 @@ class Store:
             raise KeyError(version)
         self._emit()
         return node
+
+    # ============== card chat / inbox ==============
+    @_synchronized
+    def add_message(self, node_id: str, text: str, role: str = "user") -> Node:
+        node = self.graph.node(node_id)
+        if not node:
+            raise KeyError(node_id)
+        msg = CardMessage(
+            id=_new_id(),
+            role=role,  # type: ignore[arg-type]
+            text=text,
+            processed=(role == "assistant"),
+        )
+        node.thread.append(msg)
+        self._emit()
+        return node
+
+    @_synchronized
+    def mark_processed(self, node_id: str) -> Node:
+        node = self.graph.node(node_id)
+        if not node:
+            raise KeyError(node_id)
+        for m in node.thread:
+            if m.role == "user":
+                m.processed = True
+        self._emit()
+        return node
+
+    @_synchronized
+    def reply_to_card(self, node_id: str, text: str) -> Node:
+        """Append an assistant reply and mark the card's user messages handled."""
+        node = self.graph.node(node_id)
+        if not node:
+            raise KeyError(node_id)
+        node.thread.append(
+            CardMessage(id=_new_id(), role="assistant", text=text, processed=True)
+        )
+        for m in node.thread:
+            if m.role == "user":
+                m.processed = True
+        self._emit()
+        return node
+
+    @_synchronized
+    def inbox(self) -> list[dict[str, Any]]:
+        """Cards with unprocessed user messages, for the model to drain."""
+        out: list[dict[str, Any]] = []
+        for n in self.graph.nodes:
+            pending = [m for m in n.thread if m.role == "user" and not m.processed]
+            if pending:
+                out.append(
+                    {
+                        "node": n.id,
+                        "label": n.label,
+                        "role": n.role,
+                        "unprocessed": len(pending),
+                        "messages": [m.text for m in pending],
+                    }
+                )
+        return out
 
     @_synchronized
     def set_status(self, node_id: str, status: str) -> Node:

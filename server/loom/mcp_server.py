@@ -319,6 +319,51 @@ def restore_checkpoint(checkpoint_id: str) -> dict[str, Any]:
     return _after(_call("POST", f"/api/checkpoints/{checkpoint_id}/restore"))
 
 
+# ============== card chat / inbox (in-card discussion) ==============
+@mcp.tool()
+def get_inbox() -> Any:
+    """List cards that have unprocessed user messages typed on the canvas.
+
+    The user discusses a card right on it (LibTV-style): "go collect more on X",
+    "this point doesn't match my read — let's debate it". Those notes queue here.
+    When the user says to process canvas messages (or proactively at the start of a
+    turn), call this, then handle each card with get_card_thread + reply_to_card."""
+    return _call("GET", "/api/inbox")
+
+
+@mcp.tool()
+def get_card_thread(node_id: str) -> Any:
+    """Return a card's full chat thread + its current result, so you can respond in
+    context (read what the user asked, see the card's latest result, then act)."""
+    graph = _call("GET", "/api/graph")
+    if "error" in graph:
+        return graph
+    for n in graph.get("nodes", []):
+        if n["id"] == node_id:
+            return {
+                "id": n["id"],
+                "role": n.get("role"),
+                "label": n["label"],
+                "thread": n.get("thread", []),
+                "selected_result": (
+                    next((v for v in n.get("versions", []) if v.get("selected")), None)
+                    or (n.get("versions") or [None])[-1]
+                ),
+            }
+    return {"error": f"node '{node_id}' not found"}
+
+
+@mcp.tool()
+def reply_to_card(node_id: str, text: str) -> dict[str, Any]:
+    """Post your reply into a card's chat thread and mark its user messages handled.
+
+    Use after acting on a card's discussion. If the discussion changed the card's
+    output (e.g. you gathered more, or revised a point), ALSO call set_node_result
+    to update the card — reply_to_card is the conversational answer, set_node_result
+    is the updated deliverable."""
+    return _after(_call("POST", f"/api/nodes/{node_id}/reply", json={"text": text}))
+
+
 def main() -> None:
     mcp.run()
 

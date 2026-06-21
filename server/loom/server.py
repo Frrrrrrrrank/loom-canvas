@@ -96,6 +96,11 @@ class SelectBody(BaseModel):
     version: str
 
 
+class MessageBody(BaseModel):
+    text: str
+    role: str = "user"
+
+
 class ProjectBody(BaseModel):
     name: str = ""
 
@@ -347,6 +352,36 @@ def select_version(node_id: str, body: SelectBody) -> dict[str, Any]:
         return store.select_version(node_id, body.version).model_dump()
     except KeyError as e:
         raise HTTPException(404, str(e))
+
+
+# ================= API: card chat / inbox =================
+@app.post("/api/nodes/{node_id}/message")
+def add_message(node_id: str, body: MessageBody) -> dict[str, Any]:
+    try:
+        return store.add_message(node_id, body.text, body.role).model_dump()
+    except KeyError:
+        raise HTTPException(404, f"node '{node_id}' not found")
+
+
+@app.post("/api/nodes/{node_id}/reply")
+def reply_to_card(node_id: str, body: MessageBody) -> dict[str, Any]:
+    try:
+        return store.reply_to_card(node_id, body.text).model_dump()
+    except KeyError:
+        raise HTTPException(404, f"node '{node_id}' not found")
+
+
+@app.post("/api/nodes/{node_id}/processed")
+def mark_processed(node_id: str) -> dict[str, Any]:
+    try:
+        return store.mark_processed(node_id).model_dump()
+    except KeyError:
+        raise HTTPException(404, f"node '{node_id}' not found")
+
+
+@app.get("/api/inbox")
+def get_inbox() -> list[dict[str, Any]]:
+    return store.inbox()
 
 
 # ================= API: edges =================

@@ -44,6 +44,14 @@ export type NodeRole =
   | "output"
   | "note";
 
+export interface CardMessage {
+  id: string;
+  role: "user" | "assistant";
+  text: string;
+  created_at: number;
+  processed: boolean;
+}
+
 export interface GraphNode {
   id: string;
   role: NodeRole;
@@ -57,6 +65,7 @@ export interface GraphNode {
   config: Record<string, unknown>;
   status: NodeStatus;
   versions: ResultVersion[];
+  thread: CardMessage[];
   position: { x: number; y: number };
 }
 
@@ -171,6 +180,13 @@ export const api = {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ version }),
+    }),
+
+  sendCardMessage: (id: string, text: string) =>
+    fetch(`/api/nodes/${encodeURIComponent(id)}/message`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ text }),
     }),
 
   addEdge: (source: string, target: string) =>
