@@ -388,6 +388,22 @@ def select_version(node_id: str, body: SelectBody) -> dict[str, Any]:
         raise HTTPException(404, str(e))
 
 
+# ================= API: hypothesis back-propagation =================
+class AssessBody(BaseModel):
+    issue: str
+    research: str
+    stance: str
+    note: Optional[str] = None
+
+
+@app.post("/api/assess")
+def assess(body: AssessBody) -> dict[str, Any]:
+    try:
+        return store.assess(body.issue, body.research, body.stance, body.note).model_dump()
+    except KeyError as e:
+        raise HTTPException(404, f"node not found: {e}")
+
+
 # ================= API: research card (multi-run) =================
 class RunBody(BaseModel):
     run_id: str = ""

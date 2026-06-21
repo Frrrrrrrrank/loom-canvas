@@ -101,6 +101,8 @@ export interface GraphEdge {
   source: string;
   target: string;
   relation?: string | null;
+  stance?: string | null;
+  note?: string | null;
   label?: string | null;
   condition?: string | null;
 }
@@ -254,6 +256,13 @@ export const api = {
   setEnd: (id: string) =>
     fetch(`/api/graph/end/${encodeURIComponent(id)}`, { method: "POST" }),
   clearEnd: () => fetch("/api/graph/end", { method: "DELETE" }),
+
+  assess: (issue: string, research: string, stance: string, note?: string) =>
+    fetch("/api/assess", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ issue, research, stance, note }),
+    }),
 
   setMeta: (name?: string, description?: string) =>
     fetch("/api/graph", {

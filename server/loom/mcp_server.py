@@ -360,6 +360,23 @@ def set_finding_status(node_id: str, finding_id: str, status: str) -> dict[str, 
     )
 
 
+# ============== hypothesis back-propagation ==============
+@mcp.tool()
+def assess_hypothesis(issue_id: str, research_id: str, stance: str, note: str = "") -> dict[str, Any]:
+    """Record how a research card bears on an issue's hypothesis, and auto-update the
+    issue's status. Call this after a research card is done, for each issue it feeds.
+
+    stance: confirms | challenges | mixed | inconclusive  (the research's verdict on
+    the hypothesis). The issue's status is then auto-aggregated across all its research:
+    all confirms → supported, all challenges → challenged, conflict/mixed → mixed,
+    none yet → untested. The issue→research edge is coloured by the verdict. This is
+    the loop the user wants: as research completes, the hypothesis status adjusts."""
+    return _after(
+        _call("POST", "/api/assess",
+              json={"issue": issue_id, "research": research_id, "stance": stance, "note": note})
+    )
+
+
 # ============== card chat / inbox (in-card discussion) ==============
 @mcp.tool()
 def get_inbox() -> Any:

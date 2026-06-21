@@ -703,6 +703,54 @@ class Store:
         self._emit()
         return node
 
+    # ============== hypothesis back-propagation ==============
+    def _recompute_issue_status(self, issue_id: str) -> None:
+        """Aggregate the verdicts of the research feeding an issue into its status."""
+        issue = self.graph.node(issue_id)
+        if not issue or issue.role != "issue":
+            return
+        stances = [
+            e.stance
+            for e in self.graph.edges
+            if e.source == issue_id and e.stance
+            and (self.graph.node(e.target) and self.graph.node(e.target).role == "research")
+        ]
+        has_conf = "confirms" in stances
+        has_chal = "challenges" in stances
+        if not stances:
+            status = "untested"
+        elif "mixed" in stances or (has_conf and has_chal):
+            status = "mixed"
+        elif has_conf:
+            status = "supported"
+        elif has_chal:
+            status = "challenged"
+        else:  # only inconclusive verdicts
+            status = "untested"
+        issue.fields = {**issue.fields, "status": status}
+
+    @_synchronized
+    def assess(self, issue_id: str, research_id: str, stance: str, note: Optional[str] = None) -> Node:
+        issue = self.graph.node(issue_id)
+        research = self.graph.node(research_id)
+        if not issue:
+            raise KeyError(issue_id)
+        if not research:
+            raise KeyError(research_id)
+        edge_id = f"{issue_id}->{research_id}"
+        edge = next((e for e in self.graph.edges if e.id == edge_id), None)
+        if not edge:
+            edge = Edge(
+                id=edge_id, source=issue_id, target=research_id,
+                relation=relation_for_roles(issue.role, research.role),
+            )
+            self.graph.edges.append(edge)
+        edge.stance = stance
+        edge.note = note
+        self._recompute_issue_status(issue_id)
+        self._emit()
+        return issue
+
     # ============== research card (multi-run deep research) ==============
     def _ensure_research(self, node: Node) -> Research:
         if node.research is None:

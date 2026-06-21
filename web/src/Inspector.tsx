@@ -183,6 +183,8 @@ function InspectorBody({
         <ResearchSummary node={node} onOpen={onFullscreen} />
       )}
 
+      {node.role === "issue" && <IssueEvidence node={node} />}
+
       {node.versions.length > 1 && (
         <div className="loom-version-tabs">
           {node.versions.map((v) => (
@@ -237,6 +239,38 @@ function InspectorBody({
           ))}
         </div>
       )}
+    </div>
+  );
+}
+
+function IssueEvidence({ node }: { node: GraphNode }) {
+  const graph = useStore((s) => s.graph);
+  if (!graph) return null;
+  const labelOf = (id: string) => graph.nodes.find((n) => n.id === id)?.label || id;
+  const links = graph.edges.filter(
+    (e) => e.source === node.id && graph.nodes.find((n) => n.id === e.target)?.role === "research",
+  );
+  return (
+    <div className="loom-evidence">
+      <div className="loom-sources-title">Hypothesis evidence · 假设证据</div>
+      {links.length === 0 && (
+        <div className="loom-empty">连上 research 卡后,每条研究对假设的判定会显示在这里。</div>
+      )}
+      {links.map((e) => (
+        <div key={e.id} className="loom-evi-row">
+          <span className={`loom-evi-stance ${e.stance || "pending"}`}>
+            {e.stance || "pending"}
+          </span>
+          <span className="loom-evi-research" title={labelOf(e.target)}>
+            {labelOf(e.target)}
+          </span>
+          {e.note && (
+            <span className="loom-evi-note" title={e.note}>
+              {e.note}
+            </span>
+          )}
+        </div>
+      ))}
     </div>
   );
 }

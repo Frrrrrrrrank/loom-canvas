@@ -132,6 +132,12 @@ A research card is a **multi-run deep-research task**, not a single pass. To run
    the reading mode. Only **accepted** findings should feed Synthesis.
 4. Every number must trace back: put real URLs/docs in `sources`. Downstream synthesis
    reads each research card's accepted findings (via get_node), not raw runs.
+5. **Feed the verdict back to the issues** (hypothesis back-propagation): for each
+   issue this research card supports, call `assess_hypothesis(issue_id, research_id,
+   stance, note)` with stance = confirms / challenges / mixed / inconclusive vs that
+   issue's hypothesis. The issue's status then auto-updates (supported / challenged /
+   mixed) and the edge is coloured. This is what makes the issue tree live — do it
+   every time you finish a research card.
 
 This is where Loom leans hardest on your multi-agent ability — parallel runs +
 cross-run corroboration are what make the research deep and auditable.

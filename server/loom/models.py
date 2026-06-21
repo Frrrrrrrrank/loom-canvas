@@ -213,6 +213,15 @@ class Edge(BaseModel):
         default=None,
         description="typed meaning: decompose | support | distill | visualize | evidence | relate",
     )
+    stance: Optional[str] = Field(
+        default=None,
+        description=(
+            "for an issue->research edge: the research's verdict on the issue's "
+            "hypothesis — confirms | challenges | mixed | inconclusive. Drives the "
+            "issue's auto-computed status (hypothesis back-propagation)."
+        ),
+    )
+    note: Optional[str] = Field(default=None, description="why it confirms/challenges")
     label: Optional[str] = None
     condition: Optional[str] = Field(
         default=None, description="optional human-readable routing condition"

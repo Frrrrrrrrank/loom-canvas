@@ -438,6 +438,50 @@ body {
 .loom-addcard-name { font-size: 13px; font-weight: 600; }
 .loom-addcard-blurb { font-size: 11px; color: var(--text-faint); }
 
+/* ---------- issue hypothesis evidence ---------- */
+.loom-evidence {
+  margin: 12px 0;
+}
+.loom-evi-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--line);
+  font-size: 12px;
+}
+.loom-evi-row:last-child {
+  border-bottom: none;
+}
+.loom-evi-stance {
+  font-size: 9.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  padding: 2px 7px;
+  border-radius: 6px;
+  flex-shrink: 0;
+  background: var(--panel-2);
+  color: var(--text-faint);
+}
+.loom-evi-stance.confirms { color: var(--green); background: #2eb67d18; }
+.loom-evi-stance.challenges { color: var(--red); background: #e01e5a18; }
+.loom-evi-stance.mixed { color: var(--amber); background: #ecb22e18; }
+.loom-evi-research {
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex-shrink: 0;
+  max-width: 40%;
+}
+.loom-evi-note {
+  color: var(--text-dim);
+  font-size: 11px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 /* ---------- research card (compact) ---------- */
 .loom-research-card {
   margin-top: 9px;

@@ -55,23 +55,37 @@ export function Canvas() {
       });
     });
     const roleById = new Map(graph.nodes.map((n) => [n.id, n.role]));
+    const STANCE_COLOR: Record<string, string> = {
+      confirms: "#2eb67d",
+      challenges: "#e01e5a",
+      mixed: "#ecb22e",
+      inconclusive: "#8a8aa3",
+    };
     setEdges(
       graph.edges.map((ge) => {
         // backfill the relation from the two roles if the edge predates the feature
         const rel =
           ge.relation || relationForRoles(roleById.get(ge.source), roleById.get(ge.target));
+        // an assessed evidence edge (issue->research) is coloured + labelled by verdict
+        const stanceColor = ge.stance ? STANCE_COLOR[ge.stance] : null;
+        const color = stanceColor ?? "#8a8aa3";
+        const label = ge.stance ?? ge.label ?? RELATION_LABEL[rel] ?? undefined;
         return {
           id: ge.id,
           source: ge.source,
           target: ge.target,
-          label: ge.label ?? RELATION_LABEL[rel] ?? undefined,
-          labelStyle: { fill: "var(--text-dim)", fontSize: 11, fontWeight: 600 },
+          label,
+          labelStyle: {
+            fill: stanceColor ?? "var(--text-dim)",
+            fontSize: 11,
+            fontWeight: 600,
+          },
           labelShowBg: true,
           labelBgStyle: { fill: "var(--bg)", fillOpacity: 0.9 },
           labelBgPadding: [5, 3] as [number, number],
           labelBgBorderRadius: 5,
-          markerEnd: { type: MarkerType.ArrowClosed, color: "#8a8aa3" },
-          style: { stroke: "#8a8aa3", strokeWidth: 1.5 },
+          markerEnd: { type: MarkerType.ArrowClosed, color },
+          style: { stroke: color, strokeWidth: ge.stance ? 2 : 1.5 },
           animated: false,
         };
       }),
