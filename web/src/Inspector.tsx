@@ -114,9 +114,6 @@ function InspectorBody({
 
       <div className="loom-insp-meta">
         <span className={`loom-status ${node.status}`}>{node.status}</span>
-        <button className="loom-btn tiny" onClick={() => api.setEntry(node.id)} title="Make root">
-          set root
-        </button>
         <button className="loom-btn tiny" onClick={() => (editing ? save() : setEditing(true))}>
           {editing ? "save" : "edit"}
         </button>

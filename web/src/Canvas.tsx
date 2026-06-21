@@ -33,16 +33,18 @@ export function Canvas() {
   const [edges, setEdges] = useState<Edge[]>([]);
   const positions = useRef<Map<string, { x: number; y: number }>>(new Map());
 
-  // Reconcile store graph -> React Flow nodes/edges, preserving live positions.
+  // Reconcile store graph -> React Flow nodes/edges. The server position is the
+  // source of truth (so programmatic moves from Claude Code / the API show up live);
+  // we only keep the local position for a node the user is actively dragging.
   useEffect(() => {
     if (!graph) return;
+    const draggingSet = useStore.getState().dragging;
     setNodes((prev) => {
       const prevPos = new Map(prev.map((n) => [n.id, n.position]));
       return graph.nodes.map((gn) => {
-        const pos =
-          prevPos.get(gn.id) ??
-          positions.current.get(gn.id) ??
-          gn.position;
+        const pos = draggingSet.has(gn.id)
+          ? (prevPos.get(gn.id) ?? gn.position)
+          : gn.position;
         positions.current.set(gn.id, pos);
         return {
           id: gn.id,

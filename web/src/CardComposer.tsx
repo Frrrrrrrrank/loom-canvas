@@ -27,6 +27,12 @@ export function CardComposer() {
 
   return (
     <div className="loom-composer">
+      <div className="loom-composer-header">
+        <span className="loom-composer-title">💬 对话修改这张卡片</span>
+        <span className="loom-composer-target" title={node.label}>
+          <span style={{ color: meta.tint }}>{meta.icon}</span> {node.label || node.id}
+        </span>
+      </div>
       {thread.length > 0 && (
         <div className="loom-composer-thread">
           {thread.slice(-6).map((m) => (
@@ -38,9 +44,6 @@ export function CardComposer() {
         </div>
       )}
       <div className="loom-composer-box">
-        <span className="loom-composer-tag" title={node.label}>
-          <span style={{ color: meta.tint }}>{meta.icon}</span> {node.label || node.id}
-        </span>
         <textarea
           className="loom-composer-input"
           rows={1}
