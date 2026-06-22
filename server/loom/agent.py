@@ -99,6 +99,26 @@ class AgentRunner:
             self._timer.daemon = True
             self._timer.start()
 
+    @staticmethod
+    def _child_env(port: str) -> dict[str, str]:
+        """Env for the spawned CLI. Strip vars that hijack a nested agent's auth —
+        when the Loom server is started from inside a Claude Code / Codex session it
+        inherits ANTHROPIC_BASE_URL (a gateway → 403) and CLAUDE_CODE_* markers, which
+        would break the spawned `claude -p`. Stripping them makes the nested CLI use
+        the user's own normal login. No-op when the server runs in a clean terminal."""
+        strip_prefixes = ("CLAUDE_CODE", "CLAUDE_AGENT", "CODEX_")
+        strip_exact = {
+            "CLAUDECODE", "ANTHROPIC_BASE_URL", "OPENAI_BASE_URL",
+            "AI_AGENT", "CLAUDE_EFFORT", "BAGGAGE",
+        }
+        env = {
+            k: v
+            for k, v in os.environ.items()
+            if k not in strip_exact and not any(k.startswith(p) for p in strip_prefixes)
+        }
+        env["LOOM_SERVER_URL"] = f"http://127.0.0.1:{port}"
+        return env
+
     def _build_cmd(self, prompt: str) -> list[str]:
         override = os.environ.get("LOOM_AGENT_CMD")
         if override:
@@ -128,7 +148,7 @@ class AgentRunner:
             exe = shutil.which(cmd[0]) or cmd[0]
             cmd[0] = exe
             port = os.environ.get("LOOM_PORT", "8765")
-            env = {**os.environ, "LOOM_SERVER_URL": f"http://127.0.0.1:{port}"}
+            env = self._child_env(port)
             proc = subprocess.run(
                 cmd,
                 cwd=str(REPO_ROOT),
@@ -155,14 +175,15 @@ class AgentRunner:
         finally:
             with self._lock:
                 self._running = False
+                rerun = self._rerun
+                self._rerun = False
             self._emit_status()
-            # chain only on success, to avoid a failing-spawn loop
-            if self.enabled and self.last_error is None:
-                try:
-                    if self.store.inbox():
-                        self.notify()
-                except Exception:
-                    pass
+            # Only continue if a NEW message arrived during this run (rerun). Do NOT
+            # re-spawn just because the inbox is still non-empty — a run that can't
+            # drain it (e.g. tools misconfigured) would otherwise loop forever and
+            # burn quota. A run is expected to drain the whole inbox in one pass.
+            if self.enabled and self.last_error is None and rerun:
+                self.notify()
 
     def _fallback_notice(self) -> None:
         """On failure leave user messages unprocessed; tell them to go manual.
