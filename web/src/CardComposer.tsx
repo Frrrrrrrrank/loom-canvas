@@ -4,19 +4,29 @@ import { roleMeta } from "./roles";
 import { useStore } from "./store";
 
 // Floating "discuss this card" composer, docked bottom-center over the canvas
-// (LibTV-style). Split out from the right detail panel: details live on the right,
-// the modify/chat box floats here.
+// (LibTV-style). The thread is collapsible — click the header to fold it down to
+// just the input bar when it gets tall.
 export function CardComposer() {
   const selectedNodeId = useStore((s) => s.selectedNodeId);
   const node = useStore((s) => s.graph?.nodes.find((n) => n.id === selectedNodeId));
   const agent = useStore((s) => s.agent);
   const [text, setText] = useState("");
+  const [collapsed, setCollapsed] = useState<boolean>(
+    () => localStorage.getItem("loom-composer-collapsed") === "1",
+  );
 
   if (!node) return null;
   const thread = node.thread ?? [];
   const pending = thread.filter((m) => m.role === "user" && !m.processed).length;
   const auto = !!agent?.enabled;
   const meta = roleMeta(node.role);
+  const hasThread = thread.length > 0;
+
+  const toggle = () => {
+    const next = !collapsed;
+    setCollapsed(next);
+    localStorage.setItem("loom-composer-collapsed", next ? "1" : "0");
+  };
 
   const send = async () => {
     const t = text.trim();
@@ -28,14 +38,26 @@ export function CardComposer() {
   return (
     <div className="loom-composer">
       <div className="loom-composer-header">
-        <span className="loom-composer-title">💬 对话修改这张卡片</span>
+        <button
+          className="loom-composer-titlebtn"
+          onClick={toggle}
+          title={collapsed ? "展开对话" : "收起对话"}
+          disabled={!hasThread}
+        >
+          <span className="loom-composer-caret">{hasThread ? (collapsed ? "▸" : "▾") : "💬"}</span>
+          <span className="loom-composer-title">对话修改这张卡片</span>
+          {hasThread && collapsed && (
+            <span className="loom-composer-count">{thread.length}</span>
+          )}
+        </button>
         <span className="loom-composer-target" title={node.label}>
           <span style={{ color: meta.tint }}>{meta.icon}</span> {node.label || node.id}
         </span>
       </div>
-      {thread.length > 0 && (
+
+      {hasThread && !collapsed && (
         <div className="loom-composer-thread">
-          {thread.slice(-6).map((m) => (
+          {thread.slice(-8).map((m) => (
             <div key={m.id} className={`loom-msg ${m.role}`}>
               <div className="loom-msg-who">{m.role === "user" ? "you" : "Claude Code"}</div>
               <div className="loom-msg-text">{m.text}</div>
@@ -43,6 +65,7 @@ export function CardComposer() {
           ))}
         </div>
       )}
+
       <div className="loom-composer-box">
         <textarea
           className="loom-composer-input"
@@ -63,6 +86,7 @@ export function CardComposer() {
           ↑
         </button>
       </div>
+
       {pending > 0 && (
         <div className="loom-composer-hint">
           {agent?.running

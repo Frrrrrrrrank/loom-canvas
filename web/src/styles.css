@@ -841,10 +841,35 @@ body {
   gap: 10px;
   padding: 0 4px;
 }
+.loom-composer-titlebtn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 2px 4px;
+  font: inherit;
+}
+.loom-composer-titlebtn:disabled {
+  cursor: default;
+}
+.loom-composer-caret {
+  font-size: 11px;
+  color: var(--accent-2);
+}
 .loom-composer-title {
   font-size: 12px;
   font-weight: 600;
   color: var(--accent-2);
+}
+.loom-composer-count {
+  font-size: 10px;
+  background: var(--panel-2);
+  color: var(--text-dim);
+  border-radius: 8px;
+  padding: 0 6px;
+  line-height: 16px;
 }
 .loom-composer-target {
   font-size: 11px;
