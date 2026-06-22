@@ -125,7 +125,15 @@ class AgentRunner:
             return [a.replace("{prompt}", prompt) for a in shlex.split(override)]
         if self.kind == "claude":
             return ["claude", "-p", prompt, "--permission-mode", "bypassPermissions"]
-        return ["codex", "exec", "--full-auto", prompt]
+        # codex: bypass the sandbox+approval so it can call the loom MCP tools
+        # (the workspace-write sandbox cancels them). config's model may be rejected
+        # by `codex exec` (e.g. a ChatGPT account); LOOM_CODEX_MODEL overrides it.
+        cmd = ["codex", "exec", "--dangerously-bypass-approvals-and-sandbox"]
+        model = os.environ.get("LOOM_CODEX_MODEL")
+        if model:
+            cmd += ["-m", model]
+        cmd.append(prompt)
+        return cmd
 
     def _spawn(self) -> None:
         with self._lock:

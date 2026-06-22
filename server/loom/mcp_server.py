@@ -25,7 +25,9 @@ mcp = FastMCP("loom")
 
 
 def _client() -> httpx.Client:
-    return httpx.Client(base_url=BASE_URL, timeout=20.0)
+    # trust_env=False so a proxy in the environment (e.g. HTTP_PROXY set by codex's
+    # sandbox) doesn't get applied to our localhost call to the Loom server (→ 502).
+    return httpx.Client(base_url=BASE_URL, timeout=20.0, trust_env=False)
 
 
 def _call(method: str, path: str, **kwargs) -> Any:
