@@ -1720,6 +1720,17 @@ textarea.loom-input {
   line-height: 1.5;
 }
 
+/* ---------- focus mode (lineage highlight) ---------- */
+.react-flow__node {
+  transition: opacity 0.18s ease;
+}
+.react-flow__node.loom-dim {
+  opacity: 0.2;
+}
+.react-flow__edge {
+  transition: opacity 0.18s ease;
+}
+
 /* ---------- react flow theme tweaks ---------- */
 .react-flow__controls button {
   background: var(--panel) !important;

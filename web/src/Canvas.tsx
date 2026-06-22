@@ -22,8 +22,33 @@ import { useStore } from "./store";
 
 const nodeTypes = { loom: LoomNode };
 
+// the selected card's full through-line: itself + all ancestors + all descendants
+function lineageOf(
+  g: { edges: { source: string; target: string }[] },
+  id: string,
+): Set<string> {
+  const set = new Set<string>([id]);
+  const walk = (dir: "up" | "down") => {
+    const stack = [id];
+    while (stack.length) {
+      const cur = stack.pop() as string;
+      for (const e of g.edges) {
+        const next = dir === "up" ? (e.target === cur ? e.source : null) : e.source === cur ? e.target : null;
+        if (next && !set.has(next)) {
+          set.add(next);
+          stack.push(next);
+        }
+      }
+    }
+  };
+  walk("up");
+  walk("down");
+  return set;
+}
+
 export function Canvas() {
   const graph = useStore((s) => s.graph);
+  const selectedNodeId = useStore((s) => s.selectedNodeId);
   const beginDrag = useStore((s) => s.beginDrag);
   const endDrag = useStore((s) => s.endDrag);
   const theme = useStore((s) => s.theme);
@@ -39,6 +64,11 @@ export function Canvas() {
   useEffect(() => {
     if (!graph) return;
     const draggingSet = useStore.getState().dragging;
+    // focus mode: when a card is selected, light up only its up/down through-line
+    const lineage =
+      selectedNodeId && graph.nodes.some((n) => n.id === selectedNodeId)
+        ? lineageOf(graph, selectedNodeId)
+        : null;
     setNodes((prev) => {
       const prevPos = new Map(prev.map((n) => [n.id, n.position]));
       return graph.nodes.map((gn) => {
@@ -50,6 +80,7 @@ export function Canvas() {
           id: gn.id,
           type: "loom",
           position: pos,
+          className: lineage && !lineage.has(gn.id) ? "loom-dim" : undefined,
           data: { node: gn },
         } as Node;
       });
@@ -70,11 +101,15 @@ export function Canvas() {
         const stanceColor = ge.stance ? STANCE_COLOR[ge.stance] : null;
         const color = stanceColor ?? "#8a8aa3";
         const label = ge.stance ?? ge.label ?? RELATION_LABEL[rel] ?? undefined;
+        // focus mode: an edge is "on the through-line" iff both ends are in the lineage
+        const onPath = lineage ? lineage.has(ge.source) && lineage.has(ge.target) : true;
+        const dimmed = lineage && !onPath;
+        const baseW = ge.stance ? 2 : 1.5;
         return {
           id: ge.id,
           source: ge.source,
           target: ge.target,
-          label,
+          label: dimmed ? undefined : label,
           labelStyle: {
             fill: stanceColor ?? "var(--text-dim)",
             fontSize: 11,
@@ -85,12 +120,16 @@ export function Canvas() {
           labelBgPadding: [5, 3] as [number, number],
           labelBgBorderRadius: 5,
           markerEnd: { type: MarkerType.ArrowClosed, color },
-          style: { stroke: color, strokeWidth: ge.stance ? 2 : 1.5 },
+          style: {
+            stroke: color,
+            strokeWidth: lineage && onPath ? baseW + 0.8 : baseW,
+            opacity: dimmed ? 0.1 : 1,
+          },
           animated: false,
         };
       }),
     );
-  }, [graph]);
+  }, [graph, selectedNodeId]);
 
   const onNodesChange = useCallback((changes: NodeChange[]) => {
     setNodes((nds) => applyNodeChanges(changes, nds));
