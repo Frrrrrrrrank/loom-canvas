@@ -126,3 +126,10 @@ restart (the first run is driven over local HTTP).
   placeholder) if the default headless flags don't fit your CLI version;
   `LOOM_AGENT_DEBOUNCE` / `LOOM_AGENT_TIMEOUT` tune batching / max run time. On
   failure it falls back to the manual inbox.
+  - **Codex** also needs the loom MCP in `~/.codex/config.toml` (a `[mcp_servers.loom]`
+    block), and `LOOM_CODEX_MODEL` set to a model your account allows in `codex exec`
+    (e.g. `gpt-5.5` — a ChatGPT account rejects some models). Run the server with
+    `LOOM_AGENT=codex LOOM_CODEX_MODEL=gpt-5.5`. (Claude Code needs none of this — it
+    uses the project `.mcp.json`.)
+  - The server must run where your CLI is **logged in normally** (your own terminal),
+    not inside another agent session (which can inject an auth gateway → 403).

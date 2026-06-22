@@ -25,6 +25,12 @@ the canvas over HTTP with **no restart**. The steps below assume Python ≥ 3.10
    ```
    Restart Codex so it loads the `loom` tools.
 
+For the **auto-responder** with Codex, start the server with
+`LOOM_AGENT=codex LOOM_CODEX_MODEL=<a model your account allows in \`codex exec\`>`
+(e.g. `gpt-5.5`; a ChatGPT account rejects some models). Loom runs
+`codex exec --dangerously-bypass-approvals-and-sandbox -m <model>` so it can call the
+loom MCP tools.
+
 The prebuilt canvas ships in `web/dist`, so Node is **not** required — only Python.
 
 ## Using Loom
